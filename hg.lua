@@ -18,7 +18,7 @@ local Window = Rayfield:CreateWindow({
     LoadingSubtitle = "by HenGi",
     ConfigurationSaving = Enabled = true,
         FolderName = "HGhub",
-        FileName = "Settings" },
+        FileName = "Settings",
     KeySystem = false
 })
 
