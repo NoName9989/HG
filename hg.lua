@@ -4,13 +4,21 @@ local jobId = game.JobId
 
 -- Load Rayfield Library
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+   if not Rayfield then
+    warn("Không thể tải HG Hub!")
+    return
+end
+
+local Players = game:GetService("Players")
 
 -- Tạo cửa sổ GUI
 local Window = Rayfield:CreateWindow({
     Name = "HG❤Hub",
     LoadingTitle = "Đang tải...",
     LoadingSubtitle = "by HenGi",
-    ConfigurationSaving = { Enabled = false },
+    ConfigurationSaving = Enabled = true,
+        FolderName = "HGhub",
+        FileName = "Settings" },
     KeySystem = false
 })
 
@@ -302,4 +310,132 @@ ServerTab:CreateButton({
         TeleportService:TeleportToPlaceInstance(placeId, jobId)  -- Quay lại server hiện tại
     end
     })
+-- Biến kiểm soát
+local targetEntityName = "" -- Tên thực thể được nhập
+local aliveEntities = {} -- Danh sách thực thể còn sống
+
+-- Danh sách thả xuống (Dropdown) hiển thị thực thể còn sống (giữ nguyên nếu bạn vẫn muốn)
+local EntityDropdown = UtilityTab:CreateDropdown({
+    Name = "Thực thể còn sống",
+    Options = {"Nhấn cập nhật"},
+    Callback = function(Value)
+        targetEntityName = Value
+        Rayfield:Notify({
+            Title = "Thực thể được chọn",
+            Content = "Đã chọn thực thể: " .. Value,
+            Duration = 3
+        })
+    end,
+})
+
+-- Nút cập nhật danh sách thực thể còn sống
+UtilityTab:CreateButton({
+    Name = "Cập nhật thực thể còn sống",
+    Callback = function()
+        aliveEntities = {} -- Xóa danh sách cũ
+        for _, entity in pairs(workspace:GetDescendants()) do
+            local humanoid = entity:FindFirstChildOfClass("Humanoid")
+            if humanoid and humanoid.Health > 0 then
+                table.insert(aliveEntities, entity.Name)
+            end
+        end
+        EntityDropdown:Refresh(aliveEntities, targetEntityName)
+        Rayfield:Notify({
+            Title = "Cập nhật thành công",
+            Content = "Danh sách thực thể còn sống đã được làm mới!",
+            Duration = 3
+        })
+    end,
+})
+
+-- Ô nhập tên thực thể để giết hoặc dịch chuyển
+UtilityTab:CreateInput({
+    Name = "Nhập tên thực thể",
+    PlaceholderText = "Ví dụ: HG DEPZAI",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Value)
+        targetEntityName = Value
+        Rayfield:Notify({
+            Title = "Tên thực thể",
+            Content = "Đã đặt tên thực thể: " .. Value,
+            Duration = 3
+        })
+    end,
+})
+
+-- Nút giết thực thể theo tên
+UtilityTab:CreateButton({
+    Name = "Giết thực thể theo tên",
+    Callback = function()
+        if targetEntityName == "" then
+            Rayfield:Notify({
+                Title = "Lỗi",
+                Content = "Vui lòng nhập tên thực thể trước!",
+                Duration = 3
+            })
+            return
+        end
+        local killedCount = 0
+        for _, entity in pairs(workspace:GetDescendants()) do
+            local humanoid = entity:FindFirstChildOfClass("Humanoid")
+            if humanoid and humanoid.Health > 0 and entity.Name == targetEntityName then
+                humanoid.Health = 0
+                killedCount = killedCount + 1
+            end
+        end
+        Rayfield:Notify({
+            Title = "Kill Entities",
+            Content = "Đã giết " .. killedCount .. " thực thể có tên '" .. targetEntityName .. "'!",
+            Duration = 5
+        })
+    end,
+})
+
+-- Nút dịch chuyển đến thực thể theo tên nhập
+UtilityTab:CreateButton({
+    Name = "Dịch chuyển đến thực thể",
+    Callback = function()
+        if targetEntityName == "" then
+            Rayfield:Notify({
+                Title = "Lỗi",
+                Content = "Vui lòng nhập tên thực thể trước!",
+                Duration = 3
+            })
+            return
+        end
+
+        local player = Players.LocalPlayer
+        local character = player.Character
+        if not character or not character:FindFirstChild("HumanoidRootPart") then
+            Rayfield:Notify({
+                Title = "Lỗi",
+                Content = "Không tìm thấy nhân vật của bạn!",
+                Duration = 3
+            })
+            return
+        end
+
+        -- Tìm thực thể đầu tiên khớp với tên đã nhập
+        for _, entity in pairs(workspace:GetDescendants()) do
+            local humanoid = entity:FindFirstChildOfClass("Humanoid")
+            local rootPart = entity:FindFirstChild("HumanoidRootPart")
+            if humanoid and humanoid.Health > 0 and entity.Name == targetEntityName and rootPart then
+                -- Dịch chuyển người chơi đến vị trí của thực thể
+                character.HumanoidRootPart.CFrame = rootPart.CFrame + Vector3.new(0, 5, 0) -- Dịch lên trên một chút để tránh kẹt
+                Rayfield:Notify({
+                    Title = "Dịch chuyển",
+                    Content = "Đã dịch chuyển đến '" .. targetEntityName .. "'!",
+                    Duration = 3
+                })
+                return -- Thoát sau khi dịch chuyển đến thực thể đầu tiên
+            end
+        end
+
+        Rayfield:Notify({
+            Title = "Lỗi",
+            Content = "Không tìm thấy thực thể '" .. targetEntityName .. "' còn sống!",
+            Duration = 3
+        })
+    end,
+})
 
