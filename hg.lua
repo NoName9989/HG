@@ -262,17 +262,6 @@ SettingsTab:CreateToggle({
       end
 })
 
--- Hiển thị Place ID và Job ID trong tab "Server"
-ServerTab:CreateLabel({
-    Name = "Place ID: " .. placeId,
-    TextColor = Color3.fromRGB(255, 255, 255),
-})
-
-ServerTab:CreateLabel({
-    Name = "Job ID: " .. jobId,
-    TextColor = Color3.fromRGB(255, 255, 255),
-})
-
 -- Thêm chức năng Server Hop
 ServerTab:CreateButton({
     Name = "Server Hop (Chuyển Server)",
