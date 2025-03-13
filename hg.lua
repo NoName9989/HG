@@ -261,6 +261,29 @@ SettingsTab:CreateToggle({
         end
       end
 })
+-- Biến để theo dõi trạng thái bật/tắt thông báo
+local HideNotifications = false
+
+-- Tạo Toggle để bật/tắt việc ẩn thông báo
+SettingsTab:CreateToggle({
+    Name = "Ẩn Thông Báo",
+    CurrentValue = false,
+    Callback = function(Value)
+        HideNotifications = Value
+        -- Lắng nghe thông báo trong PlayerGui và ẩn chúng nếu HideNotifications = true
+        game:GetService("Players").PlayerAdded:Connect(function(player)
+            player.PlayerGui.ChildAdded:Connect(function(child)
+                if child:IsA("TextLabel") or child:IsA("BillboardGui") then
+                    if HideNotifications then
+                        child.Visible = false  -- Ẩn thông báo
+                    else
+                        child.Visible = true   -- Hiển thị lại thông báo
+                    end
+                end
+            end)
+        end)
+    end
+})
 
 -- Thêm chức năng Server Hop
 ServerTab:CreateButton({
@@ -279,31 +302,4 @@ ServerTab:CreateButton({
         TeleportService:TeleportToPlaceInstance(placeId, jobId)  -- Quay lại server hiện tại
     end
     })
--- Thêm chức năng Thay đổi server
-ServerTab:CreateButton({
-    Name = "small sever",
-    Callback = function()
-        local TeleportService = game:GetService("TeleportService")
-        local players = game:GetService("Players")
 
-        -- Tìm server có ít người chơi nhất
-        local servers = TeleportService:GetPlaceInstanceAsync(placeId)  -- Gọi API để lấy danh sách server
-
-        -- Cách xử lý lấy server nhỏ nhất (giả sử có thể lấy thông tin từ API)
-        local smallestServer = nil
-        local minPlayers = math.huge
-
-        for _, server in pairs(servers) do
-            if server.PlayerCount < minPlayers then
-                minPlayers = server.PlayerCount
-                smallestServer = server
-            end
-        end
-
-        if smallestServer then
-            TeleportService:TeleportToPlaceInstance(placeId, smallestServer.Id)
-        else
-            print("Không tìm thấy server nhỏ.")
-        end
-    end
-    })
