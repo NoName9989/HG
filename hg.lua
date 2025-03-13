@@ -4,10 +4,6 @@ local jobId = game.JobId
 
 -- Load Rayfield Library
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
-   if not Rayfield then
-    warn("Không thể tải HG Hub!")
-    return
-end
 
 local Players = game:GetService("Players")
 
