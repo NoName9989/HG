@@ -1,3 +1,7 @@
+-- Lấy Place ID và Job ID
+local placeId = game.PlaceId
+local jobId = game.JobId
+
 -- Load Rayfield Library
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
@@ -255,10 +259,8 @@ SettingsTab:CreateToggle({
                 Duration = 2
             })
         end
+      end
 })
--- Lấy Place ID và Job ID
-local placeId = game.PlaceId
-local jobId = game.JobId
 
 -- Hiển thị Place ID và Job ID trong tab "Server"
 ServerTab:CreateLabel({
