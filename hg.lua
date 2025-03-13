@@ -5,8 +5,6 @@ local jobId = game.JobId
 -- Load Rayfield Library
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
-local Players = game:GetService("Players")
-
 -- Tạo cửa sổ GUI
 local Window = Rayfield:CreateWindow({
     Name = "HG❤Hub",
@@ -34,6 +32,7 @@ local JumpPower = 100
 local Speed = 50
 local LastTeleportTime = 0  -- Lưu thời gian dịch chuyển lần cuối
 local SpeedLock = false  -- Kiểm soát vòng lặp giữ tốc độ
+local Players = game:GetService("Players")
 
 -- Nhảy Cao Toggle
 UtilityTab:CreateToggle({
