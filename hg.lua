@@ -3,17 +3,16 @@ local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
 -- Tạo cửa sổ GUI
 local Window = Rayfield:CreateWindow({
-    Name = "HG❤Hub",
-    LoadingTitle = "Loading...",
+    Name = "HG Hub",
+    LoadingTitle = "Đang tải...",
     LoadingSubtitle = "by HenGi",
     ConfigurationSaving = { Enabled = false },
     KeySystem = false
 })
 
 -- Tabs
-local UtilityTab = Window:CreateTab("Utilities", 4483362458)
+local UtilityTab = Window:CreateTab("Tiện Ích", 4483362458)
 local SettingsTab = Window:CreateTab("Settings", 4483362459)
-local ServerTab = Window:CreateTab("Server", 4483362460)
 
 -- Biến
 local JumpEnabled = false
@@ -254,60 +253,6 @@ SettingsTab:CreateToggle({
                 Content = "Chế độ giảm lag đã bị tắt!",
                 Duration = 2
             })
-        end
-     })
-    -- Hiển thị Place ID và Job ID trong tab "Server"
-ServerTab:CreateLabel({
-    Name = "Place ID: " .. placeId,
-    TextColor = Color3.fromRGB(255, 255, 255),
-})
-
-ServerTab:CreateLabel({
-    Name = "Job ID: " .. jobId,
-    TextColor = Color3.fromRGB(255, 255, 255),
-})
-
--- Thêm chức năng Server Hop
-ServerTab:CreateButton({
-    Name = "Server Hop",
-    Callback = function()
-        local TeleportService = game:GetService("TeleportService")
-        TeleportService:Teleport(placeId)  -- Chuyển tới server cùng Place ID
-    end
-})
--- Thêm chức năng Rejoin (Tham gia lại server)
-ServerTab:CreateButton({
-    Name = "Rejoin",
-    Callback = function()
-        local TeleportService = game:GetService("TeleportService")
-        TeleportService:TeleportToPlaceInstance(placeId, jobId)  -- Quay lại server hiện tại
-    end
-})
--- Thêm chức năng Thay đổi server
-ServerTab:CreateButton({
-    Name = "small sever",
-    Callback = function()
-        local TeleportService = game:GetService("TeleportService")
-        local players = game:GetService("Players")
-
-        -- Tìm server có ít người chơi nhất
-        local servers = TeleportService:GetPlaceInstanceAsync(placeId)  -- Gọi API để lấy danh sách server
-
-        -- Cách xử lý lấy server nhỏ nhất (giả sử có thể lấy thông tin từ API)
-        local smallestServer = nil
-        local minPlayers = math.huge
-
-        for _, server in pairs(servers) do
-            if server.PlayerCount < minPlayers then
-                minPlayers = server.PlayerCount
-                smallestServer = server
-            end
-        end
-
-        if smallestServer then
-            TeleportService:TeleportToPlaceInstance(placeId, smallestServer.Id)
-        else
-            print("Không tìm thấy server nhỏ.")
         end
     end
 })
