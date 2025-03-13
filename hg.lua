@@ -255,7 +255,6 @@ SettingsTab:CreateToggle({
                 Duration = 2
             })
         end
-    end
 })
 -- Lấy Place ID và Job ID
 local placeId = game.PlaceId
