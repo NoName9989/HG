@@ -11,8 +11,9 @@ local Window = Rayfield:CreateWindow({
 })
 
 -- Tabs
-local UtilityTab = Window:CreateTab("Tiện Ích", 4483362458)
-local SettingsTab = Window:CreateTab("Settings", 4483362459)
+local UtilityTab = Window:CreateTab("Utility", 4483362458)
+local SettingsTab = Window:CreateTab("Settings", 4859271243)
+local ServerTab = Window:CreateTab("Server", 9180622665)
 
 -- Biến
 local JumpEnabled = false
