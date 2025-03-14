@@ -23,7 +23,7 @@ local ServerTab = Window:CreateTab("Server", 18561063343)
 local ESPTab = Window:CreateTab("ESP", 13005394944)
     
 -- Biến
-local espEnabled = false -- Trạng thái bật/tắt ESP
+
 local JumpEnabled = false
 local SpeedEnabled = false
 local TeleportEnabled = false
