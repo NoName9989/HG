@@ -437,6 +437,7 @@ UtilityTab:CreateButton({
         })
     end,
 })
+
 local espEnabled = false -- Trạng thái bật/tắt ESP
 
 -- Hàm tạo màu cầu vồng
@@ -521,5 +522,5 @@ ESPTab:CreateToggle({
             Content = espEnabled and "ESP đã bật!" or "ESP đã tắt!",
             Duration = 3
         })
-    end,
+    end
 })
