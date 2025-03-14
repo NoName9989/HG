@@ -438,6 +438,8 @@ UtilityTab:CreateButton({
     end,
 })
 
+local espEnabled = false -- Trạng thái bật/tắt ESP
+
 -- Hàm tạo màu cầu vồng
 local function getRainbowColor() lời
     local hue = tick() % 5 / 5
