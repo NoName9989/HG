@@ -391,7 +391,7 @@ UtilityTab:CreateButton({
 })
 
 -- Nút dịch chuyển đến thực thể theo tên nhập
-MainTab:CreateButton({
+UtilityTab:CreateButton({
     Name = "Dịch chuyển đến thực thể",
     Callback = function()
         if targetEntityName == "" then
