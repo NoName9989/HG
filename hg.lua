@@ -390,6 +390,54 @@ UtilityTab:CreateButton({
     end,
 })
 
+-- Nút dịch chuyển đến thực thể theo tên nhập
+MainTab:CreateButton({
+    Name = "Dịch chuyển đến thực thể",
+    Callback = function()
+        if targetEntityName == "" then
+            Rayfield:Notify({
+                Title = "Lỗi",
+                Content = "Vui lòng nhập tên thực thể trước!",
+                Duration = 3
+            })
+            return
+        end
+
+        local player = Players.LocalPlayer
+        local character = player.Character
+        if not character or not character:FindFirstChild("HumanoidRootPart") then
+            Rayfield:Notify({
+                Title = "Lỗi",
+                Content = "Không tìm thấy nhân vật của bạn!",
+                Duration = 3
+            })
+            return
+        end
+
+        -- Tìm thực thể đầu tiên khớp với tên đã nhập
+        for _, entity in pairs(workspace:GetDescendants()) do
+            local humanoid = entity:FindFirstChildOfClass("Humanoid")
+            local rootPart = entity:FindFirstChild("HumanoidRootPart")
+            if humanoid and humanoid.Health > 0 and entity.Name == targetEntityName and rootPart then
+                -- Dịch chuyển người chơi đến vị trí của thực thể
+                character.HumanoidRootPart.CFrame = rootPart.CFrame + Vector3.new(0, 5, 0) -- Dịch lên trên một chút để tránh kẹt
+                Rayfield:Notify({
+                    Title = "Dịch chuyển",
+                    Content = "Đã dịch chuyển đến '" .. targetEntityName .. "'!",
+                    Duration = 3
+                })
+                return -- Thoát sau khi dịch chuyển đến thực thể đầu tiên
+            end
+        end
+
+        Rayfield:Notify({
+            Title = "Lỗi",
+            Content = "Không tìm thấy thực thể '" .. targetEntityName .. "' còn sống!",
+            Duration = 3
+        })
+    end,
+})
+
 
 
 
