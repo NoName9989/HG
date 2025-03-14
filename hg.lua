@@ -35,8 +35,6 @@ local LastTeleportTime = 0  -- Lưu thời gian dịch chuyển lần cuối
 local SpeedLock = false  -- Kiểm soát vòng lặp giữ tốc độ
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
 
 -- Nhảy Cao Toggle
 UtilityTab:CreateToggle({
@@ -437,10 +435,15 @@ UtilityTab:CreateButton({
         })
     end,
 })
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
 local espEnabled = false -- Trạng thái bật/tắt ESP
 
 -- Hàm tạo màu cầu vồng
-local function getRainbowColor() lời
+local function getRainbowColor()
     local hue = tick() % 5 / 5
     return Color3.fromHSV(hue, 1, 1)
 end
@@ -475,7 +478,7 @@ local function createESP(player)
         local rootPart = player.Character.HumanoidRootPart
         local screenPosition, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
 
-        if onScreen then
+        if onScreen and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
             local distance = (LocalPlayer.Character.HumanoidRootPart.Position - rootPart.Position).Magnitude
 
             -- Kích thước hộp ESP thay đổi theo khoảng cách
@@ -523,7 +526,6 @@ ESPTab:CreateToggle({
         })
     end
 })
-
 
 
 
