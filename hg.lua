@@ -438,3 +438,89 @@ UtilityTab:CreateButton({
     end,
 })
 
+local espEnabled = false -- Trạng thái bật/tắt ESP
+
+-- Hàm tạo màu cầu vồng
+local function getRainbowColor() lời
+    local hue = tick() % 5 / 5
+    return Color3.fromHSV(hue, 1, 1)
+end
+
+local espObjects = {}
+
+local function createESP(player)
+    if player == LocalPlayer then return end -- Không vẽ ESP cho chính mình
+
+    local box = Drawing.new("Square")
+    box.Thickness = 2
+    box.Filled = false
+    box.Color = Color3.fromRGB(255, 0, 0) -- Mặc định là màu đỏ
+    box.Visible = false
+
+    local nameTag = Drawing.new("Text")
+    nameTag.Size = 16
+    nameTag.Outline = true
+    nameTag.Center = true
+    nameTag.Color = Color3.fromRGB(255, 255, 255)
+    nameTag.Visible = false
+
+    espObjects[player] = {box = box, nameTag = nameTag}
+
+    local function updateESP()
+        if not espEnabled or not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+            box.Visible = false
+            nameTag.Visible = false
+            return
+        end
+
+        local rootPart = player.Character.HumanoidRootPart
+        local screenPosition, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
+
+        if onScreen then
+            local distance = (LocalPlayer.Character.HumanoidRootPart.Position - rootPart.Position).Magnitude
+
+            -- Kích thước hộp ESP thay đổi theo khoảng cách
+            local size = math.clamp(3000 / distance, 20, 200)
+
+            -- Cập nhật màu cầu vồng
+            local rainbowColor = getRainbowColor()
+            box.Color = rainbowColor
+            nameTag.Color = rainbowColor
+
+            box.Size = Vector2.new(size, size * 1.5)
+            box.Position = Vector2.new(screenPosition.X - size / 2, screenPosition.Y - size / 2)
+            box.Visible = true
+
+            nameTag.Position = Vector2.new(screenPosition.X, screenPosition.Y - size / 2 - 20)
+            nameTag.Text = player.Name .. " [" .. math.floor(distance) .. "m]"
+            nameTag.Visible = true
+        else
+            box.Visible = false
+            nameTag.Visible = false
+        end
+    end
+
+    RunService.RenderStepped:Connect(updateESP)
+end
+
+-- Tạo ESP cho tất cả người chơi hiện tại
+for _, player in pairs(Players:GetPlayers()) do
+    createESP(player)
+end
+
+-- Khi có người chơi mới tham gia, thêm ESP cho họ
+Players.PlayerAdded:Connect(createESP)
+
+-- Nút bật/tắt ESP
+ESPTab:CreateToggle({
+    Name = "Bật/Tắt Player ESP",
+    CurrentValue = false,
+    Callback = function(Value)
+        espEnabled = Value
+        Rayfield:Notify({
+            Title = "Player ESP",
+            Content = espEnabled and "ESP đã bật!" or "ESP đã tắt!",
+            Duration = 3
+        })
+    end
+})
