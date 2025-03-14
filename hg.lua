@@ -23,7 +23,6 @@ local ServerTab = Window:CreateTab("Server", 18561063343)
 local ESPTab = Window:CreateTab("ESP", 13005394944)
     
 -- Biến
-
 local JumpEnabled = false
 local SpeedEnabled = false
 local TeleportEnabled = false
