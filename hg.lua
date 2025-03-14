@@ -38,6 +38,8 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
+local espEnabled = false -- Trạng thái bật/tắt ESP
+
 -- Nhảy Cao Toggle
 UtilityTab:CreateToggle({
     Name = "Nhảy Cao",
