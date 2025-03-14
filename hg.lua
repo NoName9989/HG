@@ -389,7 +389,7 @@ UtilityTab:CreateButton({
         })
     end,
 })
-local espEnabled = false -- Trạng thái bật/tắt ESP
+
 -- Nút dịch chuyển đến thực thể theo tên nhập
 UtilityTab:CreateButton({
     Name = "Dịch chuyển đến thực thể",
