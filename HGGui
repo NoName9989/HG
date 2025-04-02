@@ -1,0 +1,156 @@
+local MyGuiLibrary = {}
+
+local UIS = game:GetService("UserInputService")
+
+-- Hàm tạo cửa sổ chính (draggable)
+function MyGuiLibrary:CreateWindow(title)
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Parent = game.CoreGui
+
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Size = UDim2.new(0, 300, 0, 400)
+    MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    MainFrame.Parent = ScreenGui
+
+    local Title = Instance.new("TextLabel")
+    Title.Size = UDim2.new(1, 0, 0, 40)
+    Title.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    Title.Text = title
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.Parent = MainFrame
+
+    -- Kéo thả cửa sổ
+    local dragging, dragInput, startPos, startMousePos
+    Title.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            startMousePos = UIS:GetMouseLocation()
+            startPos = MainFrame.Position
+        end
+    end)
+    UIS.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = UIS:GetMouseLocation() - startMousePos
+            MainFrame.Position = startPos + UDim2.new(0, delta.X, 0, delta.Y)
+        end
+    end)
+    UIS.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+
+    return MainFrame
+end
+
+-- Hàm tạo nút bấm
+function MyGuiLibrary:CreateButton(parent, text, callback)
+    local Button = Instance.new("TextButton")
+    Button.Size = UDim2.new(1, 0, 0, 50)
+    Button.Text = text
+    Button.Parent = parent
+
+    Button.MouseButton1Click:Connect(callback)
+    return Button
+end
+
+-- Hàm tạo toggle (bật/tắt)
+function MyGuiLibrary:CreateToggle(parent, text, callback)
+    local ToggleFrame = Instance.new("Frame")
+    ToggleFrame.Size = UDim2.new(1, 0, 0, 40)
+    ToggleFrame.Parent = parent
+
+    local ToggleText = Instance.new("TextLabel")
+    ToggleText.Text = text
+    ToggleText.Size = UDim2.new(0.8, 0, 1, 0)
+    ToggleText.Parent = ToggleFrame
+
+    local ToggleButton = Instance.new("TextButton")
+    ToggleButton.Size = UDim2.new(0.2, 0, 1, 0)
+    ToggleButton.Position = UDim2.new(0.8, 0, 0, 0)
+    ToggleButton.Text = "OFF"
+    ToggleButton.Parent = ToggleFrame
+
+    local state = false
+    ToggleButton.MouseButton1Click:Connect(function()
+        state = not state
+        ToggleButton.Text = state and "ON" or "OFF"
+        callback(state)
+    end)
+
+    return ToggleFrame
+end
+
+-- Hàm tạo slider
+function MyGuiLibrary:CreateSlider(parent, text, min, max, callback)
+    local SliderFrame = Instance.new("Frame")
+    SliderFrame.Size = UDim2.new(1, 0, 0, 40)
+    SliderFrame.Parent = parent
+
+    local SliderText = Instance.new("TextLabel")
+    SliderText.Text = text
+    SliderText.Size = UDim2.new(0.6, 0, 1, 0)
+    SliderText.Parent = SliderFrame
+
+    local SliderValue = Instance.new("TextLabel")
+    SliderValue.Size = UDim2.new(0.2, 0, 1, 0)
+    SliderValue.Position = UDim2.new(0.6, 0, 0, 0)
+    SliderValue.Text = tostring(min)
+    SliderValue.Parent = SliderFrame
+
+    local SliderButton = Instance.new("TextButton")
+    SliderButton.Size = UDim2.new(0.2, 0, 1, 0)
+    SliderButton.Position = UDim2.new(0.8, 0, 0, 0)
+    SliderButton.Text = "+"
+    SliderButton.Parent = SliderFrame
+
+    local value = min
+    SliderButton.MouseButton1Click:Connect(function()
+        value = math.min(value + 1, max)
+        SliderValue.Text = tostring(value)
+        callback(value)
+    end)
+
+    return SliderFrame
+end
+
+-- Hàm tạo dropdown menu
+function MyGuiLibrary:CreateDropdown(parent, text, options, callback)
+    local DropdownFrame = Instance.new("Frame")
+    DropdownFrame.Size = UDim2.new(1, 0, 0, 40)
+    DropdownFrame.Parent = parent
+
+    local DropdownButton = Instance.new("TextButton")
+    DropdownButton.Size = UDim2.new(1, 0, 1, 0)
+    DropdownButton.Text = text
+    DropdownButton.Parent = DropdownFrame
+
+    local DropdownList = Instance.new("Frame")
+    DropdownList.Size = UDim2.new(1, 0, 0, #options * 30)
+    DropdownList.Position = UDim2.new(0, 0, 1, 0)
+    DropdownList.Visible = false
+    DropdownList.Parent = DropdownFrame
+
+    for i, option in ipairs(options) do
+        local OptionButton = Instance.new("TextButton")
+        OptionButton.Size = UDim2.new(1, 0, 0, 30)
+        OptionButton.Position = UDim2.new(0, 0, 0, (i - 1) * 30)
+        OptionButton.Text = option
+        OptionButton.Parent = DropdownList
+
+        OptionButton.MouseButton1Click:Connect(function()
+            DropdownButton.Text = option
+            DropdownList.Visible = false
+            callback(option)
+        end)
+    end
+
+    DropdownButton.MouseButton1Click:Connect(function()
+        DropdownList.Visible = not DropdownList.Visible
+    end)
+
+    return DropdownFrame
+end
+
+return MyGuiLibrary
