@@ -1,0 +1,107 @@
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "NN Hub Script List",
+   LoadingTitle = "NN Hub",
+   LoadingSubtitle = "Danh sách script chọn lọc",
+   ConfigurationSaving = {
+      Enabled = false,
+   },
+   KeySystem = false,
+})
+
+-- Tabs riêng
+local RunTab = Window:CreateTab("▶️ Chạy Script", 4483362458)
+local CopyTab = Window:CreateTab("📋 Sao Chép Script", 4483362458)
+
+-- Danh sách scripts mẫu
+local ScriptList = {
+   {
+      Name = "Infinite Yield",
+      Script = "loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()",
+      Icon = 4483362458, -- ID hình ảnh từ Roblox (có thể thay bằng ID khác)
+   },
+   {
+      Name = "Dark Dex",
+      Script = "loadstring(game:HttpGet('https://gist.githubusercontent.com/iK4oS/1a6c1774c24ce333cce4bd947c87d8d7/raw/dex.lua'))()",
+      Icon = 12222225, -- thay ID tùy ý
+   },
+   {
+      Name = "Simple Spy",
+      Script = "loadstring(game:HttpGet('https://raw.githubusercontent.com/exxtremestuffs/SimpleSpySource/master/SimpleSpy.lua'))()",
+      Icon = 8569322835,
+   },
+}
+
+-- Chạy Script
+RunTab:CreateSection("Chọn script để chạy")
+
+for _, data in ipairs(ScriptList) do
+   RunTab:CreateButton({
+      Name = data.Name,
+      Image = data.Icon,
+      Callback = function()
+         loadstring(data.Script)()
+      end,
+   })
+end
+
+-- Sao chép Script
+CopyTab:CreateSection("Chọn script để sao chép")
+
+for _, data in ipairs(ScriptList) do
+   CopyTab:CreateButton({
+      Name = data.Name,
+      Image = data.Icon,
+      Callback = function()
+         setclipboard(data.Script)
+         Rayfield:Notify({
+            Title = "Đã sao chép",
+            Content = data.Name .. " đã được sao chép vào clipboard.",
+            Duration = 4.5,
+            Image = data.Icon,
+            Actions = {
+               OK = {
+                  Name = "Đóng",
+                  Callback = function() end,
+               },
+            },
+         })
+      end,
+   })
+end
+
+task.wait(1) -- Đợi GUI load hoàn toàn
+
+local screenGui = game:GetService("CoreGui"):FindFirstChild("Rayfield") or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("Rayfield")
+if screenGui then
+   local main = screenGui:FindFirstChildWhichIsA("Frame", true)
+   if main then
+      -- Tạo nút X
+      local closeBtn = Instance.new("TextButton")
+      closeBtn.Size = UDim2.new(0, 30, 0, 30)
+      closeBtn.Position = UDim2.new(1, -35, 0, 5)
+      closeBtn.AnchorPoint = Vector2.new(0.5, 0)
+      closeBtn.Text = "X"
+      closeBtn.Font = Enum.Font.GothamBold
+      closeBtn.TextSize = 20
+      closeBtn.TextColor3 = Color3.new(1, 1, 1)
+      closeBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+      closeBtn.BorderSizePixel = 0
+      closeBtn.Name = "CloseButton"
+      closeBtn.Parent = main
+      closeBtn.ZIndex = 9999
+
+      closeBtn.MouseButton1Click:Connect(function()
+         screenGui:Destroy()
+      end)
+
+      -- Optional: Hover effect
+      closeBtn.MouseEnter:Connect(function()
+         closeBtn.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
+      end)
+      closeBtn.MouseLeave:Connect(function()
+         closeBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+      end)
+   end
+end
