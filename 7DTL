@@ -29,34 +29,51 @@ local player = Players.LocalPlayer
 
 -- ESPTab
 -- Chức năng 1
-ESPTab:CreateButton({
+-- ============================
+-- 6. Chức năng cho Tab ESP
+-- ============================
+
+local homeESPPart
+
+ESPTab:CreateToggle({
     Name = "Home ESP",
-    Callback = function()
-        local position = Vector3.new(53.0, 41.7, 416.8)
+    CurrentValue = false,
+    Callback = function(state)
+        if state then
+            -- Bật ESP: tạo marker
+            if not homeESPPart then
+                local position = Vector3.new(53.0, 41.7, 416.8)
 
-        -- Tạo marker ESP
-        local part = Instance.new("Part")
-        part.Name = "HomeESP_Marker"
-        part.Anchored = true
-        part.CanCollide = false
-        part.Size = Vector3.new(1, 1, 1)
-        part.Position = position
-        part.Transparency = 1
-        part.Parent = workspace
+                homeESPPart = Instance.new("Part")
+                homeESPPart.Name = "HomeESP_Marker"
+                homeESPPart.Anchored = true
+                homeESPPart.CanCollide = false
+                homeESPPart.Size = Vector3.new(1, 1, 1)
+                homeESPPart.Position = position
+                homeESPPart.Transparency = 1
+                homeESPPart.Parent = workspace
 
-        local billboard = Instance.new("BillboardGui")
-        billboard.Size = UDim2.new(0, 100, 0, 40)
-        billboard.Adornee = part
-        billboard.AlwaysOnTop = true
-        billboard.Parent = part
+                local billboard = Instance.new("BillboardGui")
+                billboard.Size = UDim2.new(0, 100, 0, 40)
+                billboard.Adornee = homeESPPart
+                billboard.AlwaysOnTop = true
+                billboard.Parent = homeESPPart
 
-        local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(1, 0, 1, 0)
-        label.BackgroundTransparency = 1
-        label.TextScaled = true
-        label.Text = "Home ESP"
-        label.TextColor3 = Color3.fromRGB(255, 0, 0)
-        label.Font = Enum.Font.GothamBold
-        label.Parent = billboard
+                local label = Instance.new("TextLabel")
+                label.Size = UDim2.new(1, 0, 1, 0)
+                label.BackgroundTransparency = 1
+                label.TextScaled = true
+                label.Text = "Home"
+                label.TextColor3 = Color3.fromRGB(255, 0, 0)
+                label.Font = Enum.Font.GothamBold
+                label.Parent = billboard
+            end
+        else
+            -- Tắt ESP: xóa marker
+            if homeESPPart then
+                homeESPPart:Destroy()
+                homeESPPart = nil
+            end
+        end
     end
 })
