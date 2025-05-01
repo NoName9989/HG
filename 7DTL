@@ -163,39 +163,49 @@ MainTab:CreateToggle({
 })
 
 --chức năng 5
--- Biến điều khiển Kill Aura
+-- BIẾN
 local killAuraEnabled = false
 local killAuraThread = nil
 
--- Hàm tìm và tấn công NPC gần
-local function killNearbyNPC()
+-- Hàm thực hiện bắn headshot
+local function shootHead(target)
+	local camPos = workspace.CurrentCamera.CFrame.Position
+	local head = target:FindFirstChild("Head")
+	if not head then return end
+
+	local dir = (head.Position - camPos).Unit * 500
+
+	local args = {
+		CFrame.new(camPos, camPos + dir),
+		CFrame.new(head.Position)
+	}
+
+	game:GetService("ReplicatedStorage").remotes.shoot:FireServer(unpack(args))
+end
+
+-- Hàm tìm NPC hoặc người chơi gần
+local function killNearbyTargets()
 	local player = game.Players.LocalPlayer
-	local character = player.Character or player.CharacterAdded:Wait()
-	local hrp = character:WaitForChild("HumanoidRootPart")
+	local char = player.Character or player.CharacterAdded:Wait()
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
 
 	for _, obj in pairs(workspace:GetChildren()) do
-		-- Bỏ qua chính người chơi
-		if obj:IsA("Model") and obj ~= character then
-			local humanoid = obj:FindFirstChildOfClass("Humanoid")
+		if obj:IsA("Model") and obj ~= char then
+			local hum = obj:FindFirstChildOfClass("Humanoid")
+			local head = obj:FindFirstChild("Head")
 			local root = obj:FindFirstChild("HumanoidRootPart")
 
-			if humanoid and root then
-				local distance = (root.Position - hrp.Position).Magnitude
-				if distance < 15 then -- phạm vi tấn công (có thể chỉnh)
-					local tool = character:FindFirstChildOfClass("Tool")
-					if tool then
-						tool:Activate()
-						-- Nếu có remote riêng: có thể FireServer tại đây
-					end
-				end
+			if hum and head and root and (root.Position - hrp.Position).Magnitude < 40 then
+				shootHead(obj)
 			end
 		end
 	end
 end
 
--- Nút bật/tắt trong Main Tab
+-- NÚT BẬT/TẮT (Thêm vào MainTab)
 MainTab:CreateToggle({
-	Name = "Kill Aura",
+	Name = "Kill Aura (Headshot)",
 	CurrentValue = false,
 	Callback = function(state)
 		killAuraEnabled = state
@@ -203,8 +213,8 @@ MainTab:CreateToggle({
 		if state then
 			killAuraThread = task.spawn(function()
 				while killAuraEnabled do
-					killNearbyNPC()
-					task.wait(0.5) -- Tốc độ đánh (điều chỉnh được)
+					killNearbyTargets()
+					task.wait(0.5) -- delay giữa mỗi lần quét
 				end
 			end)
 		else
