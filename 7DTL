@@ -167,31 +167,33 @@ MainTab:CreateToggle({
 local killAuraEnabled = false
 local killAuraThread = nil
 
--- Hàm thực hiện bắn headshot
+-- Hàm headshot NPC/Player
 local function shootHead(target)
-	local camPos = workspace.CurrentCamera.CFrame.Position
+	local camera = workspace.CurrentCamera
+	local origin = camera.CFrame.Position
 	local head = target:FindFirstChild("Head")
 	if not head then return end
 
-	local dir = (head.Position - camPos).Unit * 500
+	local direction = (head.Position - origin).Unit * 500
 
+	-- Gửi đúng định dạng [1], [2]
 	local args = {
-		CFrame.new(camPos, camPos + dir),
-		CFrame.new(head.Position)
+		[1] = CFrame.new(origin, origin + direction),
+		[2] = head.CFrame
 	}
 
 	game:GetService("ReplicatedStorage").remotes.shoot:FireServer(unpack(args))
 end
 
--- Hàm tìm NPC hoặc người chơi gần
+-- Hàm tìm NPC gần
 local function killNearbyTargets()
 	local player = game.Players.LocalPlayer
-	local char = player.Character or player.CharacterAdded:Wait()
-	local hrp = char:FindFirstChild("HumanoidRootPart")
+	local character = player.Character or player.CharacterAdded:Wait()
+	local hrp = character:FindFirstChild("HumanoidRootPart")
 	if not hrp then return end
 
 	for _, obj in pairs(workspace:GetChildren()) do
-		if obj:IsA("Model") and obj ~= char then
+		if obj:IsA("Model") and obj ~= character then
 			local hum = obj:FindFirstChildOfClass("Humanoid")
 			local head = obj:FindFirstChild("Head")
 			local root = obj:FindFirstChild("HumanoidRootPart")
@@ -203,9 +205,9 @@ local function killNearbyTargets()
 	end
 end
 
--- NÚT BẬT/TẮT (Thêm vào MainTab)
+-- Toggle trong MainTab (bạn đã có sẵn Rayfield)
 MainTab:CreateToggle({
-	Name = "Kill Aura (Headshot)",
+	Name = "Kill Aura (Gun)",
 	CurrentValue = false,
 	Callback = function(state)
 		killAuraEnabled = state
@@ -214,7 +216,7 @@ MainTab:CreateToggle({
 			killAuraThread = task.spawn(function()
 				while killAuraEnabled do
 					killNearbyTargets()
-					task.wait(0.5) -- delay giữa mỗi lần quét
+					task.wait(0.3)
 				end
 			end)
 		else
