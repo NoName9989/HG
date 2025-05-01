@@ -24,6 +24,85 @@ local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
 -- MainTab
+--chức năng 1
+MainTab:CreateButton({
+	Name = "Dịch chuyển về Home",
+	Callback = function()
+		local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+		if hrp then
+			hrp.CFrame = CFrame.new(53.0, 41.7, 416.8)
+		end
+	end
+})
+
+--chưc năng2
+MainTab:CreateButton({
+	Name = "Dịch chuyển đến máy bay",
+	Callback = function()
+		local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+		if hrp then
+			hrp.CFrame = CFrame.new(53.0, 41.7, 416.8)
+		end
+	end
+})
+
+--chức năng 3
+-- Biến điều khiển
+local autoScrapEnabled = false
+local autoScrapThread = nil
+
+-- Hàm xử lý loot scrap
+local function autoLootScrap()
+	local player = game.Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local hrp = character:WaitForChild("HumanoidRootPart")
+
+	-- Lưu vị trí ban đầu
+	local originalCFrame = hrp.CFrame
+
+	-- Lặp qua từng scrap
+	for _, scrap in pairs(workspace.scraps:GetChildren()) do
+		if not autoScrapEnabled then break end
+
+		local material = scrap:FindFirstChild("defaultMaterial10")
+		if material then
+			local prompt = material:FindFirstChild("ProximityPrompt")
+			if prompt then
+				-- Teleport và nhặt
+				hrp.CFrame = material.CFrame + Vector3.new(0, 3, 0)
+				task.wait(0.2)
+				fireproximityprompt(prompt)
+				task.wait(0.2)
+			end
+		end
+	end
+
+	-- Trở lại vị trí cũ
+	hrp.CFrame = originalCFrame
+end
+
+-- Nút bật/tắt trong Main Tab
+MainTab:CreateToggle({
+	Name = "Auto Loot Scrap",
+	CurrentValue = false,
+	Callback = function(state)
+		autoScrapEnabled = state
+
+		if state then
+			autoScrapThread = task.spawn(function()
+				while autoScrapEnabled do
+					autoLootScrap()
+					task.wait(5) -- Chờ 5s rồi lặp lại (có thể điều chỉnh)
+				end
+			end)
+		else
+			if autoScrapThread then
+				task.cancel(autoScrapThread)
+				autoScrapThread = nil
+			end
+		end
+	end
+})
 
 -- PlayerTab
 
@@ -402,4 +481,5 @@ ESPTab:CreateToggle({
 		end
 	end
 })
+
 
