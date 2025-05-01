@@ -104,6 +104,64 @@ MainTab:CreateToggle({
 	end
 })
 
+--chức năng 4
+-- Biến điều khiển
+local autoBerryEnabled = false
+local autoBerryThread = nil
+
+-- Hàm xử lý auto loot berry
+local function autoLootBerry()
+	local player = game.Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local hrp = character:WaitForChild("HumanoidRootPart")
+
+	-- Lưu vị trí ban đầu
+	local originalCFrame = hrp.CFrame
+
+	-- Lặp qua từng berry
+	for _, berry in pairs(workspace.harvest:GetChildren()) do
+		if not autoBerryEnabled then break end
+
+		local main = berry:FindFirstChild("main")
+		if main and main:IsA("BasePart") then
+			local prompt = main:FindFirstChild("ProximityPrompt")
+			if prompt then
+				-- Teleport và nhặt
+				hrp.CFrame = main.CFrame + Vector3.new(0, 3, 0)
+				task.wait(0.2)
+				fireproximityprompt(prompt)
+				task.wait(0.2)
+			end
+		end
+	end
+
+	-- Trở lại vị trí cũ
+	hrp.CFrame = originalCFrame
+end
+
+-- Nút bật/tắt trong Main Tab
+MainTab:CreateToggle({
+	Name = "Auto Loot Berry",
+	CurrentValue = false,
+	Callback = function(state)
+		autoBerryEnabled = state
+
+		if state then
+			autoBerryThread = task.spawn(function()
+				while autoBerryEnabled do
+					autoLootBerry()
+					task.wait(5) -- Thời gian lặp lại
+				end
+			end)
+		else
+			if autoBerryThread then
+				task.cancel(autoBerryThread)
+				autoBerryThread = nil
+			end
+		end
+	end
+})
+
 -- PlayerTab
 
 -- ESPTab
