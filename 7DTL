@@ -198,3 +198,75 @@ ESPTab:CreateToggle({
 		end
 	end
 })
+
+--chức năng 3
+local animalESPEnabled = false
+local animalESPThread = nil
+
+-- HÀM XÓA ESP CŨ
+local function clearOldESP()
+    -- Xóa ESP của tất cả các con vật trong workspace.interact
+    for _, animal in pairs(workspace.interact:GetChildren()) do
+        if animal:IsA("Model") then
+            local head = animal:FindFirstChild("Head")
+            if head and head:FindFirstChild("AnimalDieESP") then
+                head.AnimalDieESP:Destroy()
+            end
+        end
+    end
+end
+
+-- HÀM TẠO ESP CHO DEER KHI CHẾT
+local function createAnimalDieESP()
+    for _, animal in pairs(workspace.interact:GetChildren()) do
+        if animal:IsA("Model") then
+            local head = animal:FindFirstChild("Head")
+            local humanoid = animal:FindFirstChildOfClass("Humanoid")
+            if head and humanoid and humanoid.Health <= 0 and not head:FindFirstChild("AnimalDieESP") then
+                -- Tạo ESP cho phần Head của deer khi động vật chết
+                local gui = Instance.new("BillboardGui")
+                gui.Name = "AnimalDieESP"
+                gui.Adornee = head
+                gui.Size = UDim2.new(0, 100, 0, 40)
+                gui.AlwaysOnTop = true
+                gui.Parent = head
+
+                local label = Instance.new("TextLabel")
+                label.Size = UDim2.new(1, 0, 1, 0)
+                label.BackgroundTransparency = 1
+                label.Text = "Dead Animal"
+                label.TextColor3 = Color3.fromRGB(255, 0, 0)  -- Màu chữ đỏ
+                label.TextScaled = true
+                label.Font = Enum.Font.GothamBold
+                label.Parent = gui
+            end
+        end
+    end
+end
+
+-- TẠO NÚT BẬT/TẮT ESP
+ESPTab:CreateToggle({
+    Name = "Animal Die ESP",
+    CurrentValue = false,
+    Callback = function(state)
+        animalESPEnabled = state
+
+        if state then
+            -- Nếu bật, tạo thread để cập nhật ESP mỗi 3 giây
+            animalESPThread = task.spawn(function()
+                while animalESPEnabled do
+                    clearOldESP()
+                    createAnimalDieESP()
+                    task.wait(3)
+                end
+            end)
+        else
+            -- Nếu tắt, xóa ESP và dừng thread
+            clearOldESP()
+            if animalESPThread then
+                task.cancel(animalESPThread)
+                animalESPThread = nil
+            end
+        end
+    end
+})
