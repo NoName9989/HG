@@ -199,8 +199,7 @@ ESPTab:CreateToggle({
 	end
 })
 
---chức năng 3
--- BIẾN
+--chức năng 4
 local harvestESPEnabled = false
 local harvestESPThread = nil
 
@@ -262,3 +261,75 @@ ESPTab:CreateToggle({
 		end
 	end
 })
+
+--chức năng 5
+local freakESPEnabled = false
+local freakESPThread = nil
+
+-- XÓA ESP CŨ
+local function clearFreakESP()
+	local freak = workspace:FindFirstChild("scps")
+	if freak then
+		local model = freak:FindFirstChild("smiling_freak")
+		if model then
+			local head = model:FindFirstChild("Head")
+			if head and head:FindFirstChild("FreakESP") then
+				head.FreakESP:Destroy()
+			end
+		end
+	end
+end
+
+-- TẠO ESP
+local function createFreakESP()
+	local freak = workspace:FindFirstChild("scps")
+	if freak then
+		local model = freak:FindFirstChild("smiling_freak")
+		if model then
+			local head = model:FindFirstChild("Head")
+			if head and not head:FindFirstChild("FreakESP") then
+				local gui = Instance.new("BillboardGui")
+				gui.Name = "FreakESP"
+				gui.Adornee = head
+				gui.Size = UDim2.new(0, 100, 0, 40)
+				gui.AlwaysOnTop = true
+				gui.Parent = head
+
+				local label = Instance.new("TextLabel")
+				label.Size = UDim2.new(1, 0, 1, 0)
+				label.BackgroundTransparency = 1
+				label.Text = "Smiling Freak"
+				label.TextColor3 = Color3.fromRGB(255, 85, 255)
+				label.TextScaled = true
+				label.Font = Enum.Font.GothamBold
+				label.Parent = gui
+			end
+		end
+	end
+end
+
+-- NÚT BẬT/TẮT TRONG ESP TAB
+ESPTab:CreateToggle({
+	Name = "Smiling Freak ESP",
+	CurrentValue = false,
+	Callback = function(state)
+		freakESPEnabled = state
+
+		if state then
+			freakESPThread = task.spawn(function()
+				while freakESPEnabled do
+					clearFreakESP()
+					createFreakESP()
+					task.wait(3)
+				end
+			end)
+		else
+			clearFreakESP()
+			if freakESPThread then
+				task.cancel(freakESPThread)
+				freakESPThread = nil
+			end
+		end
+	end
+})
+
