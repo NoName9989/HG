@@ -201,68 +201,63 @@ ESPTab:CreateToggle({
 
 --chức năng 3
 -- BIẾN
-local animalESPEnabled = false
-local animalESPThread = nil
+local harvestESPEnabled = false
+local harvestESPThread = nil
 
 -- XÓA ESP CŨ
-local function clearOldESP()
-	for _, animal in pairs(workspace.interact:GetChildren()) do
-		if animal:IsA("Model") then
-			local eyes = animal:FindFirstChild("Eyes")
-			if eyes and eyes:FindFirstChild("AnimalDieESP") then
-				eyes.AnimalDieESP:Destroy()
-			end
+local function clearHarvestESP()
+	for _, obj in pairs(workspace.harvest:GetChildren()) do
+		local main = obj:FindFirstChild("main")
+		if main and main:FindFirstChild("HarvestESP") then
+			main:FindFirstChild("HarvestESP"):Destroy()
 		end
 	end
 end
 
--- TẠO ESP CHO ĐỘNG VẬT CHẾT (gắn vào Eyes)
-local function createAnimalDieESP()
-	for _, animal in pairs(workspace.interact:GetChildren()) do
-		if animal:IsA("Model") then
-			local eyes = animal:FindFirstChild("Eyes")
-			local humanoid = animal:FindFirstChildOfClass("Humanoid")
-			if eyes and humanoid and humanoid.Health <= 0 and not eyes:FindFirstChild("AnimalDieESP") then
-				local gui = Instance.new("BillboardGui")
-				gui.Name = "AnimalDieESP"
-				gui.Adornee = eyes
-				gui.Size = UDim2.new(0, 100, 0, 40)
-				gui.AlwaysOnTop = true
-				gui.Parent = eyes
+-- TẠO ESP
+local function createHarvestESP()
+	for _, obj in pairs(workspace.harvest:GetChildren()) do
+		local main = obj:FindFirstChild("main")
+		if main and not main:FindFirstChild("HarvestESP") then
+			local esp = Instance.new("BillboardGui")
+			esp.Name = "HarvestESP"
+			esp.Adornee = main
+			esp.Size = UDim2.new(0, 100, 0, 40)
+			esp.AlwaysOnTop = true
+			esp.Parent = main
 
-				local label = Instance.new("TextLabel")
-				label.Size = UDim2.new(1, 0, 1, 0)
-				label.BackgroundTransparency = 1
-				label.Text = "Dead Animal"
-				label.TextColor3 = Color3.fromRGB(255, 0, 0)
-				label.TextScaled = true
-				label.Font = Enum.Font.GothamBold
-				label.Parent = gui
-			end
+			local label = Instance.new("TextLabel")
+			label.Size = UDim2.new(1, 0, 1, 0)
+			label.BackgroundTransparency = 1
+			label.Text = "Berry"
+			label.TextColor3 = Color3.fromRGB(0, 255, 0)
+			label.TextScaled = true
+			label.Font = Enum.Font.GothamBold
+			label.Parent = esp
 		end
 	end
 end
 
--- NÚT BẬT/TẮT TRONG ESP TAB
+-- TẠO NÚT BẬT/TẮT TRONG ESP TAB
 ESPTab:CreateToggle({
-	Name = "Animal Die ESP",
+	Name = "Berry ESP",
 	CurrentValue = false,
 	Callback = function(state)
-		animalESPEnabled = state
+		harvestESPEnabled = state
 
 		if state then
-			animalESPThread = task.spawn(function()
-				while animalESPEnabled do
-					clearOldESP()
-					createAnimalDieESP()
+			harvestESPThread = task.spawn(function()
+				while harvestESPEnabled do
+					clearHarvestESP()
+					createHarvestESP()
 					task.wait(3)
 				end
 			end)
 		else
-			clearOldESP()
-			if animalESPThread then
-				task.cancel(animalESPThread)
-				animalESPThread = nil
+			clearHarvestESP()
+			if harvestESPThread then
+				task.cancel(harvestESPThread)
+				harvestESPThread = nil
 			end
 		end
 	end
