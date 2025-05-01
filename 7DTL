@@ -104,6 +104,112 @@ MainTab:CreateToggle({
 	end
 })
 
+--chức năng 4
+-- Biến điều khiển
+local autoBerryEnabled = false
+local autoBerryThread = nil
+
+-- Hàm xử lý auto loot berry
+local function autoLootBerry()
+	local player = game.Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local hrp = character:WaitForChild("HumanoidRootPart")
+
+	-- Lưu vị trí ban đầu
+	local originalCFrame = hrp.CFrame
+
+	-- Lặp qua từng đối tượng harvest
+	for _, obj in pairs(workspace.harvest:GetChildren()) do
+		local main = obj:FindFirstChild("main")
+		if main and main:FindFirstChild("ProximityPrompt") then
+			if not autoBerryEnabled then break end
+
+			-- Dịch chuyển đến, tương tác và chờ
+			hrp.CFrame = main.CFrame + Vector3.new(0, 3, 0)
+			task.wait(0.2)
+			fireproximityprompt(main.ProximityPrompt)
+			task.wait(0.2)
+		end
+	end
+
+	-- Quay về vị trí ban đầu
+	hrp.CFrame = originalCFrame
+end
+
+-- Nút bật/tắt trong Main Tab
+MainTab:CreateToggle({
+	Name = "Auto Loot Berry",
+	CurrentValue = false,
+	Callback = function(state)
+		autoBerryEnabled = state
+
+		if state then
+			autoBerryThread = task.spawn(function()
+				while autoBerryEnabled do
+					autoLootBerry()
+					task.wait(5) -- Chờ 5s rồi lặp lại (điều chỉnh tùy ý)
+				end
+			end)
+		else
+			if autoBerryThread then
+				task.cancel(autoBerryThread)
+				autoBerryThread = nil
+			end
+		end
+	end
+})
+
+--chức năng 5
+-- BIẾN
+local killAuraEnabled = false
+local killAuraThread = nil
+
+-- Hàm kiểm tra và đánh NPC
+local function killNearbyNPC()
+	local player = game.Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local hrp = character:WaitForChild("HumanoidRootPart")
+
+	for _, npc in pairs(workspace:GetChildren()) do
+		local humanoid = npc:FindFirstChildOfClass("Humanoid")
+		local root = npc:FindFirstChild("HumanoidRootPart")
+
+		if humanoid and root and (root.Position - hrp.Position).Magnitude < 10 then
+			-- Nếu bạn có công cụ, kích hoạt đánh
+			local tool = character:FindFirstChildOfClass("Tool")
+			if tool and tool:FindFirstChild("Handle") then
+				tool:Activate()
+			end
+			-- Nếu có remote để tấn công, gọi ở đây
+			-- ví dụ: game.ReplicatedStorage.Attack:FireServer(npc)
+		end
+	end
+end
+
+-- NÚT BẬT/TẮT
+MainTab:CreateToggle({
+	Name = "Kill Aura",
+	CurrentValue = false,
+	Callback = function(state)
+		killAuraEnabled = state
+		if state then
+			killAuraThread = task.spawn(function()
+				while killAuraEnabled do
+					killNearbyNPC()
+					task.wait(0.5)
+				end
+			end)
+		else
+			if killAuraThread then
+				task.cancel(killAuraThread)
+				killAuraThread = nil
+			end
+		end
+	end
+})
+
+Kill aura sinh vật hay người chơi vậy
+
 -- PlayerTab
 
 -- ESPTab
@@ -215,7 +321,6 @@ ESPTab:CreateToggle({
 })
 
 --chức năng 3
--- BIẾN
 local animalESPEnabled = false
 local animalESPThread = nil
 
