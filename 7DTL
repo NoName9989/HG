@@ -162,6 +162,60 @@ MainTab:CreateToggle({
 	end
 })
 
+--chức năng 5
+-- Biến điều khiển Kill Aura
+local killAuraEnabled = false
+local killAuraThread = nil
+
+-- Hàm tìm và tấn công NPC gần
+local function killNearbyNPC()
+	local player = game.Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local hrp = character:WaitForChild("HumanoidRootPart")
+
+	for _, obj in pairs(workspace:GetChildren()) do
+		-- Bỏ qua chính người chơi
+		if obj:IsA("Model") and obj ~= character then
+			local humanoid = obj:FindFirstChildOfClass("Humanoid")
+			local root = obj:FindFirstChild("HumanoidRootPart")
+
+			if humanoid and root then
+				local distance = (root.Position - hrp.Position).Magnitude
+				if distance < 15 then -- phạm vi tấn công (có thể chỉnh)
+					local tool = character:FindFirstChildOfClass("Tool")
+					if tool then
+						tool:Activate()
+						-- Nếu có remote riêng: có thể FireServer tại đây
+					end
+				end
+			end
+		end
+	end
+end
+
+-- Nút bật/tắt trong Main Tab
+MainTab:CreateToggle({
+	Name = "Kill Aura",
+	CurrentValue = false,
+	Callback = function(state)
+		killAuraEnabled = state
+
+		if state then
+			killAuraThread = task.spawn(function()
+				while killAuraEnabled do
+					killNearbyNPC()
+					task.wait(0.5) -- Tốc độ đánh (điều chỉnh được)
+				end
+			end)
+		else
+			if killAuraThread then
+				task.cancel(killAuraThread)
+				killAuraThread = nil
+			end
+		end
+	end
+})
+
 -- PlayerTab
 
 -- ESPTab
