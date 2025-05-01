@@ -1,0 +1,62 @@
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
+-- Tạo cửa sổ GUI
+local Window = Rayfield:CreateWindow({
+    Name = "HG❤Hub",
+    LoadingTitle = "[7DTL]Đang tải...",
+    LoadingSubtitle = "by HenGi",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "HGhub",
+        FileName = "Settings"
+    },
+    KeySystem = false
+})
+
+-- Tabs (đã sửa lại tên và icon hợp lý)
+local MainTab = Window:CreateTab("Main", 7539983773)              
+local PlayerTab = Window:CreateTab("Player", 130156611516915)              
+local ESPTab = Window:CreateTab("ESP", 18155313082)    
+local MiscTab = Window:CreateTab("Misc", 133142974652905)
+local SettingTab = Window:CreateTab("Setting", 4859271243)        
+-- Biến
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-- MainTab
+
+-- PlayerTab
+
+-- ESPTab
+-- Chức năng 1
+ESPTab:CreateButton({
+    Name = "Home ESP",
+    Callback = function()
+        local position = Vector3.new(53.0, 41.7, 416.8)
+
+        -- Tạo marker ESP
+        local part = Instance.new("Part")
+        part.Name = "HomeESP_Marker"
+        part.Anchored = true
+        part.CanCollide = false
+        part.Size = Vector3.new(1, 1, 1)
+        part.Position = position
+        part.Transparency = 1
+        part.Parent = workspace
+
+        local billboard = Instance.new("BillboardGui")
+        billboard.Size = UDim2.new(0, 100, 0, 40)
+        billboard.Adornee = part
+        billboard.AlwaysOnTop = true
+        billboard.Parent = part
+
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.TextScaled = true
+        label.Text = "Home ESP"
+        label.TextColor3 = Color3.fromRGB(255, 0, 0)
+        label.Font = Enum.Font.GothamBold
+        label.Parent = billboard
+    end
+})
