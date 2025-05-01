@@ -29,10 +29,6 @@ local player = Players.LocalPlayer
 
 -- ESPTab
 -- Chức năng 1
--- ============================
--- 6. Chức năng cho Tab ESP
--- ============================
-
 local homeESPPart
 
 ESPTab:CreateToggle({
@@ -77,3 +73,28 @@ ESPTab:CreateToggle({
         end
     end
 })
+
+-- chức năng 2
+local foundScraps = {}
+
+for _, obj in pairs(workspace:GetDescendants()) do
+    if obj:IsA("BasePart") and obj.Name:lower():find("scraps") then
+        table.insert(foundScraps, obj)
+
+        -- Tạo đánh dấu ESP
+        local gui = Instance.new("BillboardGui", obj)
+        gui.Size = UDim2.new(0, 100, 0, 40)
+        gui.AlwaysOnTop = true
+        gui.Adornee = obj
+
+        local label = Instance.new("TextLabel", gui)
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.TextScaled = true
+        label.Text = "Scrap"
+        label.TextColor3 = Color3.fromRGB(255, 200, 0)
+        label.Font = Enum.Font.GothamBold
+    end
+end
+
+print("Tổng số Scraps tìm được:", #foundScraps)
