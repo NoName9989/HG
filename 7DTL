@@ -75,26 +75,66 @@ ESPTab:CreateToggle({
 })
 
 -- chức năng 2
-local foundScraps = {}
+-- ============================
+-- Scrap ESP Toggle (Auto Scan)
+-- ============================
 
-for _, obj in pairs(workspace:GetDescendants()) do
-    if obj:IsA("BasePart") and obj.Name:lower():find("scraps") then
-        table.insert(foundScraps, obj)
+local scrapMarkers = {}
+local scrapScanning = false
+local scanConnection
 
-        -- Tạo đánh dấu ESP
-        local gui = Instance.new("BillboardGui", obj)
-        gui.Size = UDim2.new(0, 100, 0, 40)
-        gui.AlwaysOnTop = true
-        gui.Adornee = obj
+local function createScrapESP(part)
+    if part:FindFirstChild("ScrapESP") then return end
 
-        local label = Instance.new("TextLabel", gui)
-        label.Size = UDim2.new(1, 0, 1, 0)
-        label.BackgroundTransparency = 1
-        label.TextScaled = true
-        label.Text = "Scrap"
-        label.TextColor3 = Color3.fromRGB(255, 200, 0)
-        label.Font = Enum.Font.GothamBold
-    end
+    local gui = Instance.new("BillboardGui")
+    gui.Size = UDim2.new(0, 100, 0, 40)
+    gui.AlwaysOnTop = true
+    gui.Adornee = part
+    gui.Name = "ScrapESP"
+    gui.Parent = part
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.TextScaled = true
+    label.Text = "Scrap"
+    label.TextColor3 = Color3.fromRGB(255, 200, 0)
+    label.Font = Enum.Font.GothamBold
+    label.Parent = gui
+
+    table.insert(scrapMarkers, gui)
 end
 
-print("Tổng số Scraps tìm được:", #foundScraps)
+ESPTab:CreateToggle({
+    Name = "Scrap ESP",
+    CurrentValue = false,
+    Callback = function(state)
+        scrapScanning = state
+
+        if state then
+            -- Lập trình quét lặp lại
+            scanConnection = task.spawn(function()
+                while scrapScanning do
+                    for _, obj in pairs(workspace:GetDescendants()) do
+                        if obj:IsA("BasePart") and obj.Name:lower():find("scraps") then
+                            createScrapESP(obj)
+                        end
+                    end
+                    task.wait(5) -- quét lại mỗi 5 giây
+                end
+            end)
+        else
+            -- Tắt & xoá toàn bộ ESP
+            for _, gui in ipairs(scrapMarkers) do
+                if gui and gui.Parent then
+                    gui:Destroy()
+                end
+            end
+            scrapMarkers = {}
+            if scanConnection then
+                task.cancel(scanConnection)
+                scanConnection = nil
+            end
+        end
+    end
+})
