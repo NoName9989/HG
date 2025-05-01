@@ -333,3 +333,73 @@ ESPTab:CreateToggle({
 	end
 })
 
+--chức năng 6
+local playerESPEnabled = false
+local playerESPThread = nil
+
+-- XÓA ESP CŨ
+local function clearPlayerESP()
+	for _, plr in pairs(Players:GetPlayers()) do
+		if plr ~= LocalPlayer and plr.Character then
+			local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+			if hrp then
+				local existing = hrp:FindFirstChild("PlayerESP")
+				if existing then
+					existing:Destroy()
+				end
+			end
+		end
+	end
+end
+
+-- TẠO ESP CHO NGƯỜI CHƠI
+local function createPlayerESP()
+	for _, plr in pairs(Players:GetPlayers()) do
+		if plr ~= LocalPlayer and plr.Character then
+			local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+			if hrp and not hrp:FindFirstChild("PlayerESP") then
+				local esp = Instance.new("BillboardGui")
+				esp.Name = "PlayerESP"
+				esp.Adornee = hrp
+				esp.Size = UDim2.new(0, 100, 0, 40)
+				esp.AlwaysOnTop = true
+				esp.Parent = hrp
+
+				local label = Instance.new("TextLabel")
+				label.Size = UDim2.new(1, 0, 1, 0)
+				label.BackgroundTransparency = 1
+				label.Text = plr.DisplayName
+				label.TextColor3 = Color3.fromRGB(0, 170, 255)
+				label.TextScaled = true
+				label.Font = Enum.Font.GothamBold
+				label.Parent = esp
+			end
+		end
+	end
+end
+
+-- NÚT BẬT/TẮT TRONG ESP TAB
+ESPTab:CreateToggle({
+	Name = "Player ESP",
+	CurrentValue = false,
+	Callback = function(state)
+		playerESPEnabled = state
+
+		if state then
+			playerESPThread = task.spawn(function()
+				while playerESPEnabled do
+					clearPlayerESP()
+					createPlayerESP()
+					task.wait(3)
+				end
+			end)
+		else
+			clearPlayerESP()
+			if playerESPThread then
+				task.cancel(playerESPThread)
+				playerESPThread = nil
+			end
+		end
+	end
+})
+
