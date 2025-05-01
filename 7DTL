@@ -75,22 +75,18 @@ ESPTab:CreateToggle({
 })
 
 -- chức năng 2
--- ============================
--- Scrap ESP Toggle (Auto Scan)
--- ============================
-
-local scrapMarkers = {}
-local scrapScanning = false
-local scanConnection
+local scrapESPEnabled = false
+local scrapESPGuiList = {}
+local scrapESPThread
 
 local function createScrapESP(part)
     if part:FindFirstChild("ScrapESP") then return end
 
     local gui = Instance.new("BillboardGui")
+    gui.Name = "ScrapESP"
+    gui.Adornee = part
     gui.Size = UDim2.new(0, 100, 0, 40)
     gui.AlwaysOnTop = true
-    gui.Adornee = part
-    gui.Name = "ScrapESP"
     gui.Parent = part
 
     local label = Instance.new("TextLabel")
@@ -102,38 +98,40 @@ local function createScrapESP(part)
     label.Font = Enum.Font.GothamBold
     label.Parent = gui
 
-    table.insert(scrapMarkers, gui)
+    table.insert(scrapESPGuiList, gui)
+end
+
+local function removeScrapESP()
+    for _, gui in ipairs(scrapESPGuiList) do
+        if gui and gui.Parent then
+            gui:Destroy()
+        end
+    end
+    scrapESPGuiList = {}
 end
 
 ESPTab:CreateToggle({
     Name = "Scrap ESP",
     CurrentValue = false,
     Callback = function(state)
-        scrapScanning = state
+        scrapESPEnabled = state
 
         if state then
-            -- Lập trình quét lặp lại
-            scanConnection = task.spawn(function()
-                while scrapScanning do
+            scrapESPThread = task.spawn(function()
+                while scrapESPEnabled do
                     for _, obj in pairs(workspace:GetDescendants()) do
                         if obj:IsA("BasePart") and obj.Name:lower():find("scraps") then
                             createScrapESP(obj)
                         end
                     end
-                    task.wait(5) -- quét lại mỗi 5 giây
+                    task.wait(5)
                 end
             end)
         else
-            -- Tắt & xoá toàn bộ ESP
-            for _, gui in ipairs(scrapMarkers) do
-                if gui and gui.Parent then
-                    gui:Destroy()
-                end
-            end
-            scrapMarkers = {}
-            if scanConnection then
-                task.cancel(scanConnection)
-                scanConnection = nil
+            removeScrapESP()
+            if scrapESPThread then
+                task.cancel(scrapESPThread)
+                scrapESPThread = nil
             end
         end
     end
