@@ -134,3 +134,67 @@ ESPTab:CreateToggle({
 		end
 	end
 })
+
+--chức năng 3
+-- BIẾN
+local animalESPEnabled = false
+local animalESPThread = nil
+
+-- HÀM XÓA ESP CŨ
+local function clearOldESP()
+	for _, animal in pairs(workspace.animals:GetChildren()) do
+		local head = animal:FindFirstChild("Head")
+		if head and head:FindFirstChild("AnimalESP") then
+			head.AnimalESP:Destroy()
+		end
+	end
+end
+
+-- HÀM TẠO ESP
+local function createAnimalESP()
+	for _, animal in pairs(workspace.animals:GetChildren()) do
+		local head = animal:FindFirstChild("Head")
+		if head and head:IsA("BasePart") and not head:FindFirstChild("AnimalESP") then
+			local gui = Instance.new("BillboardGui")
+			gui.Name = "AnimalESP"
+			gui.Adornee = head
+			gui.Size = UDim2.new(0, 100, 0, 40)
+			gui.AlwaysOnTop = true
+			gui.Parent = head
+
+			local label = Instance.new("TextLabel")
+			label.Size = UDim2.new(1, 0, 1, 0)
+			label.BackgroundTransparency = 1
+			label.Text = "Animal"
+			label.TextColor3 = Color3.fromRGB(0, 255, 0)
+			label.TextScaled = true
+			label.Font = Enum.Font.GothamBold
+			label.Parent = gui
+		end
+	end
+end
+
+-- NÚT BẬT/TẮT TRONG TAB ESP
+ESPTab:CreateToggle({
+	Name = "Animal ESP",
+	CurrentValue = false,
+	Callback = function(state)
+		animalESPEnabled = state
+
+		if state then
+			animalESPThread = task.spawn(function()
+				while animalESPEnabled do
+					clearOldESP()
+					createAnimalESP()
+					task.wait(3)
+				end
+			end)
+		else
+			clearOldESP()
+			if animalESPThread then
+				task.cancel(animalESPThread)
+				animalESPThread = nil
+			end
+		end
+	end
+})
