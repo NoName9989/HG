@@ -208,8 +208,6 @@ MainTab:CreateToggle({
 	end
 })
 
-Kill aura sinh vật hay người chơi vậy
-
 -- PlayerTab
 
 -- ESPTab
