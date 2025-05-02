@@ -239,6 +239,25 @@ MainTab:CreateToggle({
 })
 
 -- PlayerTab
+--chức năng 1
+PlayerTab:CreateToggle({
+	Name = "CameraMode",
+	CurrentValue = false,
+	Callback = function(state)
+		local player = game.Players.LocalPlayer
+		if state then
+			-- Mở góc nhìn tự do (classic)
+			player.CameraMode = Enum.CameraMode.Classic
+			player.CameraMinZoomDistance = 5
+			player.CameraMaxZoomDistance = 20
+		else
+			-- Khoá lại góc nhìn thứ nhất
+			player.CameraMode = Enum.CameraMode.LockFirstPerson
+			player.CameraMinZoomDistance = 0.5
+			player.CameraMaxZoomDistance = 0.5
+		end
+	end
+})
 
 -- ESPTab
 -- Chức năng 1
