@@ -430,7 +430,12 @@ PlayerTab:CreateButton({
 })
 
 -- Chức năng 7 
-
+PlayerTab:CreateButton({
+    Name = "Fly GUI V3",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/refs/heads/main/FlyGuiV3.txt"))()
+    end,
+})
 -- ESPTab
 -- Chức năng 1
 local homeESPPart
