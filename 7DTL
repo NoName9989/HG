@@ -853,7 +853,7 @@ MiscTab:CreateToggle({
 })
 
 --chức năng 2
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
 local reloadRemote = ReplicatedStorage:WaitForChild("remotes"):WaitForChild("reload")
 
 local reloading = false
