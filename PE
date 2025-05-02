@@ -88,7 +88,7 @@ MainTab:CreateToggle({
                         end
                     end
 
-                    task.wait(1) -- Mỗi 1 giây mới lặp lại
+                    task.wait(2) -- Mỗi 2 giây mới lặp lại
                 end
             end)
         end
