@@ -663,16 +663,35 @@ local function autoTriggerProximityPrompt()
 end
 
 -- Nút bật/tắt trong MiscTab
+-- Hàm kiểm tra và tự động kích hoạt ProximityPrompt khi người chơi click
+local function autoClickProximityPrompt()
+    -- Lấy người chơi hiện tại
+    local player = game.Players.LocalPlayer
+    local mouse = player:GetMouse()
+
+    -- Kiểm tra nếu người chơi click vào các đối tượng có ProximityPrompt
+    mouse.Button1Click:Connect(function()
+        -- Kiểm tra đối tượng mà người chơi click vào
+        local hit = mouse.Hit
+        local obj = hit.Parent  -- Tìm đối tượng chứa ProximityPrompt (thường là một phần của model)
+
+        -- Kiểm tra xem đối tượng có ProximityPrompt không
+        local prompt = obj:FindFirstChild("ProximityPrompt")
+        if prompt then
+            -- Kích hoạt ProximityPrompt ngay lập tức
+            fireproximityprompt(prompt)
+        end
+    end)
+end
+
+-- Nút bật/tắt trong MiscTab
 MiscTab:CreateToggle({
-	Name = "Auto Trigger ProximityPrompt",
+	Name = "Auto Click ProximityPrompt",
 	CurrentValue = false,
 	Callback = function(state)
 		if state then
-			-- Kích hoạt ProximityPrompt tự động
-			while true do
-				autoTriggerProximityPrompt() -- Gọi hàm kiểm tra và kích hoạt ProximityPrompt
-				task.wait(1) -- Cập nhật mỗi giây
-			end
+			-- Kích hoạt sự kiện click tự động
+			autoClickProximityPrompt()
 		end
 	end
 })
