@@ -272,6 +272,157 @@ PlayerTab:CreateToggle({
 	end
 })
 
+--chức năng 2
+-- Biến điều khiển
+local JumpEnabled = false
+local SpeedEnabled = false
+local TeleportEnabled = false
+local NoclipEnabled = false
+local SpeedLock = false
+local LastTeleportTime = 0
+
+-- Giá trị mặc định
+local DefaultJump = humanoid.JumpPower
+local DefaultSpeed = humanoid.WalkSpeed
+local JumpPower = 100
+local Speed = 50
+
+PlayerTab:CreateToggle({
+	Name = "Nhảy Cao",
+	CurrentValue = false,
+	Callback = function(Value)
+		JumpEnabled = Value
+		humanoid.JumpPower = Value and JumpPower or DefaultJump
+	end
+})
+
+PlayerTab:CreateSlider({
+	Name = "Chiều Cao Nhảy",
+	Range = {50, 1000},
+	Increment = 10,
+	CurrentValue = JumpPower,
+	Callback = function(Value)
+		JumpPower = Value
+		if JumpEnabled then
+			humanoid.JumpPower = JumpPower
+		end
+	end
+})
+
+--chức năng 3
+PlayerTab:CreateToggle({
+	Name = "Chạy Nhanh",
+	CurrentValue = false,
+	Callback = function(Value)
+		SpeedEnabled = Value
+		if SpeedEnabled then
+			SpeedLock = true
+			task.spawn(function()
+				while SpeedLock do
+					if humanoid.WalkSpeed ~= Speed then
+						humanoid.WalkSpeed = Speed
+					end
+					wait(0.1)
+				end
+			end)
+		else
+			SpeedLock = false
+			humanoid.WalkSpeed = DefaultSpeed
+		end
+	end
+})
+
+PlayerTab:CreateSlider({
+	Name = "Tốc Độ Chạy",
+	Range = {16, 1000},
+	Increment = 10,
+	CurrentValue = Speed,
+	Callback = function(Value)
+		Speed = Value
+		if SpeedEnabled then
+			humanoid.WalkSpeed = Speed
+		end
+	end
+})
+
+--chức năng 4
+PlayerTab:CreateToggle({
+	Name = "Dịch Chuyển Khi Ấn",
+	CurrentValue = false,
+	Callback = function(Value)
+		TeleportEnabled = Value
+	end
+})
+
+local mouse = player:GetMouse()
+mouse.Button1Down:Connect(function()
+	if TeleportEnabled then
+		local now = tick()
+		if now - LastTeleportTime >= 2 then
+			local pos = mouse.Hit.p
+			if character then
+				character:MoveTo(pos)
+				LastTeleportTime = now
+			end
+		else
+			Rayfield:Notify({
+				Title = "Dịch Chuyển",
+				Content = "Bạn phải đợi 2 giây trước khi dịch chuyển tiếp!",
+				Duration = 1.5
+			})
+		end
+	end
+end)
+
+--chức năng 5
+local function ToggleNoclip()
+	while NoclipEnabled do
+		for _, part in pairs(character:GetDescendants()) do
+			if part:IsA("BasePart") and part.CanCollide then
+				part.CanCollide = false
+			end
+		end
+		wait(0.1)
+	end
+end
+
+PlayerTab:CreateToggle({
+	Name = "Xuyên Tường (Noclip)",
+	CurrentValue = false,
+	Callback = function(Value)
+		NoclipEnabled = Value
+		if NoclipEnabled then
+			task.spawn(ToggleNoclip)
+		end
+	end
+})
+
+--chức năng 6
+PlayerTab:CreateButton({
+	Name = "Reset",
+	Callback = function()
+		-- Reset tốc độ chạy
+		Speed = 50
+		SpeedEnabled = false
+		SpeedLock = false
+		humanoid.WalkSpeed = DefaultSpeed
+
+		-- Reset chiều cao nhảy
+		JumpPower = 100
+		JumpEnabled = false
+		humanoid.JumpPower = DefaultJump
+
+		-- Reset dịch chuyển
+		TeleportEnabled = false
+
+		Rayfield:Notify({
+			Title = "Reset Thành Công",
+			Content = "Đã reset tất cả (trừ xuyên tường)!",
+			Duration = 2
+		})
+	end
+})
+
 -- ESPTab
 -- Chức năng 1
 local homeESPPart
