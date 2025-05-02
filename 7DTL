@@ -182,19 +182,31 @@ MainTab:CreateToggle({
 })
 
 --chức năng 6
-MainTab:CreateButton({
-    Name = "Spin Skin",
-    Callback = function()
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local hrp = character:WaitForChild("HumanoidRootPart")
+-- Biến điều khiển
+local fixedPositionEnabled = false
+local originalCFrame = nil
+local originalWalkSpeed = nil
 
-        -- Dịch chuyển và cố định tại vị trí
+-- Hàm bật/tắt cố định người chơi
+local function toggleFixedPosition(state)
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart")
+    local humanoid = character:WaitForChild("Humanoid")
+
+    if state then
+        -- Lưu lại vị trí ban đầu và tốc độ di chuyển
+        originalCFrame = hrp.CFrame
+        originalWalkSpeed = humanoid.WalkSpeed
+
+        -- Dịch chuyển người chơi đến vị trí cố định
         hrp.CFrame = CFrame.new(201.0, 13.3, 595.6)
-        
-        -- Mỗi 0.5s kiểm tra ProximityPrompt gần đó và tự động ấn E
-        while true do
-            wait(0.5)
+
+        -- Tắt di chuyển
+        humanoid.WalkSpeed = 0
+
+        -- Tự động ấn ProximityPrompt trong bán kính 10 đơn vị
+        while fixedPositionEnabled do
             for _, descendant in ipairs(workspace:GetDescendants()) do
                 if descendant:IsA("ProximityPrompt") and descendant.Enabled then
                     local distance = (descendant.Parent.Position - hrp.Position).Magnitude
@@ -203,7 +215,26 @@ MainTab:CreateButton({
                     end
                 end
             end
+            wait(0.5)  -- Kiểm tra mỗi 0.5s
         end
+    else
+        -- Trả lại vị trí và tốc độ di chuyển ban đầu
+        if originalCFrame then
+            hrp.CFrame = originalCFrame
+        end
+        if originalWalkSpeed then
+            humanoid.WalkSpeed = originalWalkSpeed
+        end
+    end
+end
+
+-- Tạo nút bật/tắt trong MainTab
+MainTab:CreateToggle({
+    Name = "Spin Skin",
+    CurrentValue = false,
+    Callback = function(state)
+        fixedPositionEnabled = state
+        toggleFixedPosition(state)
     end,
 })
 
