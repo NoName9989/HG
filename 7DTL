@@ -815,24 +815,20 @@ ESPTab:CreateToggle({
 --chức năng 1
 local Lighting = game:GetService("Lighting")
 
-local nightVisionEffect = Instance.new("ColorCorrectionEffect")
-nightVisionEffect.Name = "NightVisionEffect"
-nightVisionEffect.Brightness = 0.3
-nightVisionEffect.Contrast = 0.5
-nightVisionEffect.TintColor = Color3.fromRGB(0, 255, 100) -- xanh lá dịu
-
 MiscTab:CreateToggle({
     Name = "Night Vision",
     CurrentValue = false,
     Callback = function(Value)
         if Value then
-            if not Lighting:FindFirstChild("NightVisionEffect") then
-                nightVisionEffect:Clone().Parent = Lighting
-            end
+            Lighting.Brightness = 3
+            Lighting.ClockTime = 14 -- ban ngày
+            Lighting.FogEnd = 100000
+            Lighting.GlobalShadows = false
         else
-            if Lighting:FindFirstChild("NightVisionEffect") then
-                Lighting.NightVisionEffect:Destroy()
-            end
+            Lighting.Brightness = 1
+            Lighting.ClockTime = 0 -- khôi phục về đêm nếu cần
+            Lighting.FogEnd = 1000
+            Lighting.GlobalShadows = true
         end
     end,
 })
