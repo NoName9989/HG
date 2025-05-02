@@ -816,7 +816,7 @@ ESPTab:CreateToggle({
 local Lighting = game:GetService("Lighting")
 
 MiscTab:CreateToggle({
-    Name = "Night Vision (Sáng trong bóng tối)",
+    Name = "Night Vision",
     CurrentValue = false,
     Callback = function(Value)
         if Value then
