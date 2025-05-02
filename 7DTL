@@ -273,6 +273,11 @@ PlayerTab:CreateToggle({
 })
 
 --chức năng 2
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
 -- Biến điều khiển
 local JumpEnabled = false
 local SpeedEnabled = false
@@ -287,6 +292,7 @@ local DefaultSpeed = humanoid.WalkSpeed
 local JumpPower = 100
 local Speed = 50
 
+-- Chức năng 2 - Nhảy Cao
 PlayerTab:CreateToggle({
 	Name = "Nhảy Cao",
 	CurrentValue = false,
@@ -309,7 +315,7 @@ PlayerTab:CreateSlider({
 	end
 })
 
---chức năng 3
+-- Chức năng 3 - Chạy Nhanh
 PlayerTab:CreateToggle({
 	Name = "Chạy Nhanh",
 	CurrentValue = false,
@@ -345,7 +351,7 @@ PlayerTab:CreateSlider({
 	end
 })
 
---chức năng 4
+-- Chức năng 4 - Dịch Chuyển Khi Ấn
 PlayerTab:CreateToggle({
 	Name = "Dịch Chuyển Khi Ấn",
 	CurrentValue = false,
@@ -374,7 +380,7 @@ mouse.Button1Down:Connect(function()
 	end
 end)
 
---chức năng 5
+-- Chức năng 5 - Xuyên Tường (Noclip)
 local function ToggleNoclip()
 	while NoclipEnabled do
 		for _, part in pairs(character:GetDescendants()) do
@@ -397,7 +403,7 @@ PlayerTab:CreateToggle({
 	end
 })
 
---chức năng 6
+-- Chức năng 6 - Reset
 PlayerTab:CreateButton({
 	Name = "Reset",
 	Callback = function()
@@ -423,13 +429,10 @@ PlayerTab:CreateButton({
 	end
 })
 
---chức năng 7
+-- Chức năng 7 - Fly
 local UIS = game:GetService("UserInputService")
 local RS = game:GetService("RunService")
-local Players = game:GetService("Players")
-local Player = Players.LocalPlayer
-local Character = Player.Character or Player.CharacterAdded:Wait()
-local HRP = Character:WaitForChild("HumanoidRootPart")
+local HRP = character:WaitForChild("HumanoidRootPart")
 
 local flying = false
 local flySpeed = 80
@@ -490,7 +493,6 @@ PlayerTab:CreateSlider({
 		flySpeed = value
 	end
 })
-
 -- ESPTab
 -- Chức năng 1
 local homeESPPart
