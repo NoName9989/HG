@@ -429,7 +429,7 @@ PlayerTab:CreateButton({
 	end
 })
 
--- Chức năng 7 - Fly
+-- Chức năng 7 
 -- Khởi tạo biến tốc độ bay
 local speeds = 1
 local maxspeed = speeds * 10
