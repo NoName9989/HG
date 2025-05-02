@@ -186,6 +186,12 @@ MainTab:CreateToggle({
 local fixedPositionEnabled = false
 local originalCFrame = nil
 local originalWalkSpeed = nil
+local promptConnections = {}
+
+-- Hàm xử lý khi một prompt được kích hoạt
+local function onPromptTriggered(prompt)
+    game:GetService("ReplicatedStorage").remotes.finished_unbox:FireServer()
+end
 
 -- Hàm bật/tắt cố định người chơi
 local function toggleFixedPosition(state)
@@ -195,38 +201,33 @@ local function toggleFixedPosition(state)
     local humanoid = character:WaitForChild("Humanoid")
 
     if state then
-        -- Lưu lại vị trí ban đầu và tốc độ di chuyển
         originalCFrame = hrp.CFrame
         originalWalkSpeed = humanoid.WalkSpeed
 
-        -- Dịch chuyển người chơi đến vị trí cố định
         hrp.CFrame = CFrame.new(201.0, 13.3, 595.6)
-
-        -- Tắt di chuyển
         humanoid.WalkSpeed = 0
 
-        -- Tự động ấn ProximityPrompt trong bán kính 10 đơn vị (duy nhất mỗi prompt)
         task.spawn(function()
-            local activatedPrompts = {}
-
             while fixedPositionEnabled do
                 for _, descendant in ipairs(workspace:GetDescendants()) do
-                    if descendant:IsA("ProximityPrompt") and descendant.Enabled and not activatedPrompts[descendant] then
+                    if descendant:IsA("ProximityPrompt") and descendant.Enabled then
+                        -- Kết nối sự kiện Triggered nếu chưa kết nối
+                        if not promptConnections[descendant] then
+                            promptConnections[descendant] = descendant.Triggered:Connect(function()
+                                onPromptTriggered(descendant)
+                            end)
+                        end
+
                         local promptPart = descendant.Parent:IsA("BasePart") and descendant.Parent or descendant
                         local distance = (promptPart.Position - hrp.Position).Magnitude
                         if distance < 10 then
                             fireproximityprompt(descendant)
-                            game:GetService("ReplicatedStorage").remotes.finished_unbox:FireServer()
-
-                            -- Đánh dấu đã xử lý
-                            activatedPrompts[descendant] = true
                         end
                     end
                 end
                 task.wait(0.5)
             end
         end)
-
     else
         -- Trả lại vị trí và tốc độ di chuyển ban đầu
         if originalCFrame then
@@ -235,6 +236,14 @@ local function toggleFixedPosition(state)
         if originalWalkSpeed then
             humanoid.WalkSpeed = originalWalkSpeed
         end
+
+        -- Ngắt kết nối tất cả Prompt
+        for prompt, connection in pairs(promptConnections) do
+            if connection.Connected then
+                connection:Disconnect()
+            end
+        end
+        promptConnections = {}
     end
 end
 
