@@ -205,20 +205,29 @@ local function toggleFixedPosition(state)
         -- Tắt di chuyển
         humanoid.WalkSpeed = 0
 
-        -- Tự động ấn ProximityPrompt trong bán kính 10 đơn vị
-while fixedPositionEnabled do
-    for _, descendant in ipairs(workspace:GetDescendants()) do
-        if descendant:IsA("ProximityPrompt") and descendant.Enabled then
-            local promptPart = descendant.Parent:FindFirstChild("Position") and descendant.Parent or descendant
-            local distance = (promptPart.Position - hrp.Position).Magnitude
-            if distance < 10 then
-                fireproximityprompt(descendant)
-                game:GetService("ReplicatedStorage").remotes.finished_unbox:FireServer()
+        -- Tự động ấn ProximityPrompt trong bán kính 10 đơn vị (duy nhất mỗi prompt)
+        task.spawn(function()
+            local activatedPrompts = {}
+
+            while fixedPositionEnabled do
+                for _, descendant in ipairs(workspace:GetDescendants()) do
+                    if descendant:IsA("ProximityPrompt") and descendant.Enabled and not activatedPrompts[descendant] then
+                        local promptPart = descendant.Parent:IsA("BasePart") and descendant.Parent or descendant
+                        local distance = (promptPart.Position - hrp.Position).Magnitude
+                        if distance < 10 then
+                            fireproximityprompt(descendant)
+                            game:GetService("ReplicatedStorage").remotes.finished_unbox:FireServer()
+
+                            -- Đánh dấu đã xử lý
+                            activatedPrompts[descendant] = true
+                        end
+                    end
+                end
+                task.wait(0.5)
             end
-        end
-    end
-    wait(0.5)
-end
+        end)
+
+    else
         -- Trả lại vị trí và tốc độ di chuyển ban đầu
         if originalCFrame then
             hrp.CFrame = originalCFrame
@@ -229,7 +238,7 @@ end
     end
 end
 
--- Tạo nút bật/tắt trong MainTab
+-- Tạo toggle trong MainTab
 MainTab:CreateToggle({
     Name = "Spin Skin",
     CurrentValue = false,
