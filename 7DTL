@@ -430,69 +430,99 @@ PlayerTab:CreateButton({
 })
 
 -- Chức năng 7 - Fly
-local UIS = game:GetService("UserInputService")
-local RS = game:GetService("RunService")
-local HRP = character:WaitForChild("HumanoidRootPart")
+-- Khởi tạo biến tốc độ bay
+local speeds = 1
+local maxspeed = speeds * 10
+local tpwalking = false
 
-local flying = false
-local flySpeed = 80
-local flyVelocity
-
--- Bắt đầu bay
-local function startFly()
-	if not HRP:FindFirstChild("FlyVelocity") then
-		flyVelocity = Instance.new("BodyVelocity")
-		flyVelocity.Name = "FlyVelocity"
-		flyVelocity.MaxForce = Vector3.new(1, 1, 1) * 1e6
-		flyVelocity.Velocity = Vector3.zero
-		flyVelocity.Parent = HRP
-	end
-
-	RS:BindToRenderStep("FlyUpdate", Enum.RenderPriority.Input.Value, function()
-		local cam = workspace.CurrentCamera
-		local moveDir = Vector3.new()
-
-		if UIS:IsKeyDown(Enum.KeyCode.W) then moveDir += cam.CFrame.LookVector end
-		if UIS:IsKeyDown(Enum.KeyCode.S) then moveDir -= cam.CFrame.LookVector end
-		if UIS:IsKeyDown(Enum.KeyCode.A) then moveDir -= cam.CFrame.RightVector end
-		if UIS:IsKeyDown(Enum.KeyCode.D) then moveDir += cam.CFrame.RightVector end
-		if UIS:IsKeyDown(Enum.KeyCode.Space) then moveDir += cam.CFrame.UpVector end
-		if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir -= cam.CFrame.UpVector end
-
-		flyVelocity.Velocity = moveDir.Unit * flySpeed
-	end)
-end
-
--- Dừng bay
-local function stopFly()
-	RS:UnbindFromRenderStep("FlyUpdate")
-	if flyVelocity then flyVelocity:Destroy() end
-end
-
--- Toggle Fly
-PlayerTab:CreateToggle({
-	Name = "Fly",
-	CurrentValue = false,
-	Callback = function(state)
-		flying = state
-		if flying then
-			startFly()
-		else
-			stopFly()
-		end
-	end
-})
-
--- Fly Speed Slider
+-- Tạo Slider điều chỉnh tốc độ bay
 PlayerTab:CreateSlider({
-	Name = "Tốc Độ Bay",
-	Range = {10, 300},
-	Increment = 10,
-	CurrentValue = 80,
-	Callback = function(value)
-		flySpeed = value
-	end
+	Name = "Tốc độ bay",
+	Range = {1, 20},
+	Increment = 1,
+	Suffix = "x",
+	CurrentValue = speeds,
+	Flag = "FlySpeedSlider",
+	Callback = function(Value)
+		speeds = Value
+		maxspeed = speeds * 10
+	end,
 })
+
+-- Khởi tạo các thành phần liên quan đến bay
+local function fly()
+	local plr = game.Players.LocalPlayer
+	local UpperTorso = plr.Character.UpperTorso
+	local flying = true
+	local deb = true
+	local ctrl = {f = 0, b = 0, l = 0, r = 0}
+	local lastctrl = {f = 0, b = 0, l = 0, r = 0}
+
+	-- Tạo BodyGyro và BodyVelocity
+	local bg = Instance.new("BodyGyro", UpperTorso)
+	bg.P = 9e4
+	bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+	bg.cframe = UpperTorso.CFrame
+
+	local bv = Instance.new("BodyVelocity", UpperTorso)
+	bv.velocity = Vector3.new(0, 0.1, 0)
+	bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+
+	-- Bắt đầu bay
+	while flying == true or game:GetService("Players").LocalPlayer.Character.Humanoid.Health == 0 do
+		wait()
+
+		-- Điều chỉnh tốc độ bay
+		if ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 then
+			speed = speed + .5 + (speed / maxspeed)
+			if speed > maxspeed then
+				speed = maxspeed
+			end
+		elseif not (ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0) and speed ~= 0 then
+			speed = speed - 1
+			if speed < 0 then
+				speed = 0
+			end
+		end
+
+		-- Di chuyển bay
+		if (ctrl.l + ctrl.r) ~= 0 or (ctrl.f + ctrl.b) ~= 0 then
+			bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (ctrl.f + ctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(ctrl.l + ctrl.r, (ctrl.f + ctrl.b) * .2, 0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p)) * speed
+			lastctrl = {f = ctrl.f, b = ctrl.b, l = ctrl.l, r = ctrl.r}
+		elseif (ctrl.l + ctrl.r) == 0 and (ctrl.f + ctrl.b) == 0 and speed ~= 0 then
+			bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (lastctrl.f + lastctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(lastctrl.l + lastctrl.r, (lastctrl.f + lastctrl.b) * .2, 0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p)) * speed
+		else
+			bv.velocity = Vector3.new(0, 0, 0)
+		end
+
+		bg.cframe = game.Workspace.CurrentCamera.CoordinateFrame * CFrame.Angles(-math.rad((ctrl.f + ctrl.b) * 50 * speed / maxspeed), 0, 0)
+	end
+
+	-- Dọn dẹp sau khi kết thúc bay
+	ctrl = {f = 0, b = 0, l = 0, r = 0}
+	lastctrl = {f = 0, b = 0, l = 0, r = 0}
+	speed = 0
+	bg:Destroy()
+	bv:Destroy()
+	plr.Character.Humanoid.PlatformStand = false
+	game.Players.LocalPlayer.Character.Animate.Disabled = false
+	tpwalking = false
+end
+
+-- Điều khiển bay khi nhấn phím
+game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	if input.KeyCode == Enum.KeyCode.Space then
+		fly()
+	end
+end)
+
+-- Khởi tạo khi người chơi vào lại
+game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(char)
+	wait(0.7)
+	game.Players.LocalPlayer.Character.Humanoid.PlatformStand = false
+	game.Players.LocalPlayer.Character.Animate.Disabled = false
+end)
 -- ESPTab
 -- Chức năng 1
 local homeESPPart
