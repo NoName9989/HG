@@ -900,6 +900,8 @@ SettingTab:AddButton({
         if configName ~= "" then
             -- Tạo file config với tên nhập vào (Lưu cài đặt của game)
             table.insert(configList, configName)
+            -- Cập nhật lại danh sách dropdown với config mới
+            SettingTab:UpdateDropdown("Choose config", configList)
             print("Config created with name: " .. configName)
         else
             print("Please enter a config name!")
