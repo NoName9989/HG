@@ -1,0 +1,75 @@
+local Players = game:GetService("Players")
+local StarterGui = game:GetService("StarterGui")
+
+-- Tạo GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "IDViewer"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame", screenGui)
+frame.Position = UDim2.new(0.3, 0, 0.3, 0)
+frame.Size = UDim2.new(0, 300, 0, 200)
+frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+frame.BackgroundTransparency = 0.1
+frame.BorderSizePixel = 0
+
+-- Nút đóng (X)
+local closeButton = Instance.new("TextButton", frame)
+closeButton.Size = UDim2.new(0, 30, 0, 30)
+closeButton.Position = UDim2.new(1, -35, 0, 5)
+closeButton.Text = "X"
+closeButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.Font = Enum.Font.SourceSansBold
+closeButton.TextSize = 18
+closeButton.AutoButtonColor = true
+
+closeButton.MouseButton1Click:Connect(function()
+    frame.Visible = false
+end)
+
+-- Tạo tiêu đề
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Text = "Thông tin Server/Map"
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 20
+title.TextColor3 = Color3.fromRGB(0, 0, 0)
+title.BackgroundTransparency = 1
+
+-- Tạo dòng hiển thị ID và nút sao chép
+local function createIDRow(name, value, yOffset)
+    local label = Instance.new("TextLabel", frame)
+    label.Position = UDim2.new(0, 10, 0, yOffset)
+    label.Size = UDim2.new(0, 200, 0, 30)
+    label.Text = name .. ": " .. value
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(0, 0, 0)
+    label.Font = Enum.Font.SourceSans
+    label.TextSize = 16
+
+    local button = Instance.new("TextButton", frame)
+    button.Position = UDim2.new(0, 220, 0, yOffset)
+    button.Size = UDim2.new(0, 60, 0, 30)
+    button.Text = "Copy"
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    button.Font = Enum.Font.SourceSansBold
+    button.TextSize = 16
+
+    button.MouseButton1Click:Connect(function()
+        setclipboard(value)
+        StarterGui:SetCore("SendNotification", {
+            Title = "Đã sao chép",
+            Text = name .. " đã được sao chép!",
+            Duration = 2
+        })
+    end)
+end
+
+-- Lấy ID
+createIDRow("PlaceId", tostring(game.PlaceId), 40)
+createIDRow("GameId", tostring(game.GameId), 80)
+createIDRow("JobId", tostring(game.JobId), 120)
