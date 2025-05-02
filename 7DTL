@@ -240,18 +240,31 @@ MainTab:CreateToggle({
 
 -- PlayerTab
 --chức năng 1
+local cameraControlEnabled = false
+local cameraThread = nil
+
 PlayerTab:CreateToggle({
 	Name = "CameraMode",
 	CurrentValue = false,
 	Callback = function(state)
 		local player = game.Players.LocalPlayer
+		cameraControlEnabled = state
+
 		if state then
-			-- Mở góc nhìn tự do (classic)
-			player.CameraMode = Enum.CameraMode.Classic
-			player.CameraMinZoomDistance = 5
-			player.CameraMaxZoomDistance = 20
+			cameraThread = task.spawn(function()
+				while cameraControlEnabled do
+					player.CameraMode = Enum.CameraMode.Classic
+					player.CameraMinZoomDistance = 5
+					player.CameraMaxZoomDistance = 20
+					task.wait(0.5) -- kiểm tra lại mỗi 0.5s
+				end
+			end)
 		else
-			-- Khoá lại góc nhìn thứ nhất
+			if cameraThread then
+				task.cancel(cameraThread)
+				cameraThread = nil
+			end
+			-- Khóa lại góc nhìn thứ nhất
 			player.CameraMode = Enum.CameraMode.LockFirstPerson
 			player.CameraMinZoomDistance = 0.5
 			player.CameraMaxZoomDistance = 0.5
@@ -633,5 +646,31 @@ ESPTab:CreateToggle({
 		end
 	end
 })
+
+--MiscTab
+--chức năng 1
+local ProximityPromptService = game:GetService("ProximityPromptService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Biến kiểm soát
+local autoPromptEnabled = false
+
+-- Toggle trong MiscTab
+MiscTab:CreateToggle({
+	Name = "Auto Prompt E",
+	CurrentValue = false,
+	Callback = function(state)
+		autoPromptEnabled = state
+	end
+})
+
+-- Theo dõi khi người chơi kích hoạt Prompt
+ProximityPromptService.PromptTriggered:Connect(function(prompt, player)
+	if autoPromptEnabled and player == LocalPlayer then
+		task.wait() -- Đợi 1 frame để tránh lỗi
+		fireproximityprompt(prompt)
+	end
+end)
 
 
