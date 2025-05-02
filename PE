@@ -36,7 +36,7 @@ MainTab:CreateToggle({
                     local root = character:FindFirstChild("HumanoidRootPart")
                     local liveModel = workspace.World.Live:FindFirstChild(player.Name)
 
-                    if not (character and root and liveModel) then task.wait(1) continue end
+                    if not (character and root and liveModel) then task.wait(0.5) continue end
 
                     -- Kiểm tra nếu đứng yên
                     if lastPos and (root.Position - lastPos).Magnitude < 1 then
@@ -88,7 +88,7 @@ MainTab:CreateToggle({
                         end
                     end
 
-                    task.wait(1) -- Mỗi 1 giây mới lặp lại
+                    task.wait(0.5) -- Mỗi 0.5 giây mới lặp lại
                 end
             end)
         end
