@@ -860,19 +860,21 @@ local reloading = false
 local reloadLoop
 
 MiscTab:CreateToggle({
-    Name = "Vô Hạn Đạn",
+    Name = "Auto Reload",
     CurrentValue = false,
-    Callback = function(Value)
-        reloading = Value
+    Callback = function(state)
+        reloading = state
         if reloading then
             reloadLoop = task.spawn(function()
                 while reloading do
                     reloadRemote:FireServer()
-                    task.wait(0.5) -- điều chỉnh delay nếu cần
+                    task.wait(0.5) -- Bạn có thể đổi thời gian lặp ở đây
                 end
             end)
         else
-            reloading = false
+            if reloadLoop then
+                task.cancel(reloadLoop)
+            end
         end
     end,
 })
