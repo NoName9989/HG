@@ -1,0 +1,96 @@
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "HG❤Hub",
+    LoadingTitle = "[PE]Đang tải...",
+    LoadingSubtitle = "by HenGi",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "HGhub",
+        FileName = "Settings"
+    },
+    KeySystem = false
+})
+
+local MainTab = Window:CreateTab("Main", 7539983773)
+local toggleEnabled = false
+
+local Players = game:GetService("Players")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+MainTab:CreateToggle({
+    Name = "Auto Đá Bóng (Blue Lock + U20)",
+    CurrentValue = false,
+    Callback = function(state)
+        toggleEnabled = state
+
+        if state then
+            task.spawn(function()
+                local lastPos = nil
+                local lastMoveTime = tick()
+
+                while toggleEnabled do
+                    local character = player.Character or player.CharacterAdded:Wait()
+                    local root = character:FindFirstChild("HumanoidRootPart")
+                    local liveModel = workspace.World.Live:FindFirstChild(player.Name)
+
+                    if not (character and root and liveModel) then task.wait(1) continue end
+
+                    -- Kiểm tra nếu đứng yên
+                    if lastPos and (root.Position - lastPos).Magnitude < 1 then
+                        if tick() - lastMoveTime >= 1.5 then
+                            root.CFrame = CFrame.new(root.Position + Vector3.new(0, 0.1, 0))
+                            lastMoveTime = tick()
+                        end
+                    else
+                        lastPos = root.Position
+                        lastMoveTime = tick()
+                    end
+
+                    local clothes = liveModel:FindFirstChild("Clothes")
+                    local isBlueLock = clothes and clothes:FindFirstChild("Blue Lock")
+                    local isU20 = clothes and clothes:FindFirstChild("U20")
+
+                    local myBall = liveModel:FindFirstChild("Ball")
+                    local isHolding = myBall and myBall:FindFirstChild("Holding")
+
+                    if isHolding then
+                        local goalPos = isBlueLock and Vector3.new(-332.6, 92.3, 436.8) or (isU20 and Vector3.new(-331.2, 92.3, -381.1))
+                        if goalPos then
+                            root.CFrame = CFrame.new(goalPos)
+                            local mousePos = workspace.CurrentCamera.ViewportSize / 2
+                            VirtualInputManager:SendMouseButtonEvent(mousePos.X, mousePos.Y, 0, true, game, 0)
+                            task.wait(0.1)
+                            VirtualInputManager:SendMouseButtonEvent(mousePos.X, mousePos.Y, 0, false, game, 0)
+                        end
+                    else
+                        local targetPos
+                        local placeHolder = workspace.World.Balls.Default:FindFirstChild("placeHolder")
+
+                        if placeHolder then
+                            targetPos = placeHolder.Position
+                        else
+                            for _, plrModel in pairs(workspace.World.Live:GetChildren()) do
+                                if plrModel.Name ~= player.Name and plrModel:FindFirstChild("Ball") and plrModel.Ball:FindFirstChild("Holding") then
+                                    targetPos = plrModel.Ball.Holding.Position
+                                    break
+                                end
+                            end
+                        end
+
+                        if targetPos then
+                            root.CFrame = CFrame.new(targetPos + Vector3.new(0, 2, 0))
+                            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                            task.wait(0.1)
+                            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                        end
+                    end
+
+                    task.wait(1) -- Mỗi 1 giây mới lặp lại
+                end
+            end)
+        end
+    end
+})
