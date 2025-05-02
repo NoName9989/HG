@@ -206,18 +206,19 @@ local function toggleFixedPosition(state)
         humanoid.WalkSpeed = 0
 
         -- Tự động ấn ProximityPrompt trong bán kính 10 đơn vị
-        while fixedPositionEnabled do
-            for _, descendant in ipairs(workspace:GetDescendants()) do
-                if descendant:IsA("ProximityPrompt") and descendant.Enabled then
-                    local distance = (descendant.Parent.Position - hrp.Position).Magnitude
-                    if distance < 10 then
-                        fireproximityprompt(descendant)
-                    end
-                end
+while fixedPositionEnabled do
+    for _, descendant in ipairs(workspace:GetDescendants()) do
+        if descendant:IsA("ProximityPrompt") and descendant.Enabled then
+            local promptPart = descendant.Parent:FindFirstChild("Position") and descendant.Parent or descendant
+            local distance = (promptPart.Position - hrp.Position).Magnitude
+            if distance < 10 then
+                fireproximityprompt(descendant)
+                game:GetService("ReplicatedStorage").remotes.finished_unbox:FireServer()
             end
-            wait(0.5)  -- Kiểm tra mỗi 0.5s
         end
-    else
+    end
+    wait(0.5)
+end
         -- Trả lại vị trí và tốc độ di chuyển ban đầu
         if originalCFrame then
             hrp.CFrame = originalCFrame
