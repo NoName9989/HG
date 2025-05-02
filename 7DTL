@@ -430,12 +430,26 @@ PlayerTab:CreateButton({
 })
 
 -- Chức năng 7 
--- Khởi tạo biến tốc độ bay
 local speeds = 1
 local maxspeed = speeds * 10
 local tpwalking = false
+local flying = false -- Biến để kiểm tra trạng thái bay
 
--- Tạo Slider điều chỉnh tốc độ bay
+-- Tạo Toggle bật/tắt bay trong PlayerTab
+PlayerTab:CreateToggle({
+	Name = "Bay (Fly)",
+	CurrentValue = false,
+	Callback = function(state)
+		flying = state
+		if flying then
+			startFlying()  -- Bắt đầu bay nếu bật toggle
+		else
+			stopFlying()  -- Dừng bay nếu tắt toggle
+		end
+	end
+})
+
+-- Tạo Slider tốc độ bay trong PlayerTab
 PlayerTab:CreateSlider({
 	Name = "Tốc độ bay",
 	Range = {1, 20},
@@ -449,12 +463,11 @@ PlayerTab:CreateSlider({
 	end,
 })
 
--- Khởi tạo các thành phần liên quan đến bay
-local function fly()
+-- Hàm bắt đầu bay
+local function startFlying()
 	local plr = game.Players.LocalPlayer
 	local UpperTorso = plr.Character.UpperTorso
-	local flying = true
-	local deb = true
+	flying = true
 	local ctrl = {f = 0, b = 0, l = 0, r = 0}
 	local lastctrl = {f = 0, b = 0, l = 0, r = 0}
 
@@ -469,7 +482,7 @@ local function fly()
 	bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
 
 	-- Bắt đầu bay
-	while flying == true or game:GetService("Players").LocalPlayer.Character.Humanoid.Health == 0 do
+	while flying == true do
 		wait()
 
 		-- Điều chỉnh tốc độ bay
@@ -497,25 +510,24 @@ local function fly()
 
 		bg.cframe = game.Workspace.CurrentCamera.CoordinateFrame * CFrame.Angles(-math.rad((ctrl.f + ctrl.b) * 50 * speed / maxspeed), 0, 0)
 	end
-
-	-- Dọn dẹp sau khi kết thúc bay
-	ctrl = {f = 0, b = 0, l = 0, r = 0}
-	lastctrl = {f = 0, b = 0, l = 0, r = 0}
-	speed = 0
-	bg:Destroy()
-	bv:Destroy()
-	plr.Character.Humanoid.PlatformStand = false
-	game.Players.LocalPlayer.Character.Animate.Disabled = false
-	tpwalking = false
 end
 
--- Điều khiển bay khi nhấn phím
-game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
-	if gameProcessed then return end
-	if input.KeyCode == Enum.KeyCode.Space then
-		fly()
-	end
-end)
+-- Hàm dừng bay
+local function stopFlying()
+	flying = false
+	local plr = game.Players.LocalPlayer
+	local UpperTorso = plr.Character.UpperTorso
+
+	-- Dọn dẹp BodyGyro và BodyVelocity khi dừng bay
+	local bg = UpperTorso:FindFirstChildOfClass("BodyGyro")
+	local bv = UpperTorso:FindFirstChildOfClass("BodyVelocity")
+	if bg then bg:Destroy() end
+	if bv then bv:Destroy() end
+
+	-- Thiết lập lại trạng thái của nhân vật
+	plr.Character.Humanoid.PlatformStand = false
+	game.Players.LocalPlayer.Character.Animate.Disabled = false
+end
 
 -- Khởi tạo khi người chơi vào lại
 game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(char)
