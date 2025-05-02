@@ -853,12 +853,15 @@ MiscTab:CreateToggle({
 })
 
 --chức năng 2
-
+--// Kết nối remote reload
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local reloadRemote = ReplicatedStorage:WaitForChild("remotes"):WaitForChild("reload")
 
+--// Biến điều khiển
 local reloading = false
 local reloadLoop
 
+--// Tạo toggle Auto Reload
 MiscTab:CreateToggle({
     Name = "Auto Reload",
     CurrentValue = false,
@@ -868,7 +871,7 @@ MiscTab:CreateToggle({
             reloadLoop = task.spawn(function()
                 while reloading do
                     reloadRemote:FireServer()
-                    task.wait(0.5) -- Bạn có thể đổi thời gian lặp ở đây
+                    task.wait(0.5) -- Thời gian delay giữa mỗi lần reload
                 end
             end)
         else
@@ -877,6 +880,5 @@ MiscTab:CreateToggle({
             end
         end
     end,
-})
+ })
 
---SettingTab
