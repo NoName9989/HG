@@ -423,6 +423,74 @@ PlayerTab:CreateButton({
 	end
 })
 
+--chức năng 7
+local UIS = game:GetService("UserInputService")
+local RS = game:GetService("RunService")
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local HRP = Character:WaitForChild("HumanoidRootPart")
+
+local flying = false
+local flySpeed = 80
+local flyVelocity
+
+-- Bắt đầu bay
+local function startFly()
+	if not HRP:FindFirstChild("FlyVelocity") then
+		flyVelocity = Instance.new("BodyVelocity")
+		flyVelocity.Name = "FlyVelocity"
+		flyVelocity.MaxForce = Vector3.new(1, 1, 1) * 1e6
+		flyVelocity.Velocity = Vector3.zero
+		flyVelocity.Parent = HRP
+	end
+
+	RS:BindToRenderStep("FlyUpdate", Enum.RenderPriority.Input.Value, function()
+		local cam = workspace.CurrentCamera
+		local moveDir = Vector3.new()
+
+		if UIS:IsKeyDown(Enum.KeyCode.W) then moveDir += cam.CFrame.LookVector end
+		if UIS:IsKeyDown(Enum.KeyCode.S) then moveDir -= cam.CFrame.LookVector end
+		if UIS:IsKeyDown(Enum.KeyCode.A) then moveDir -= cam.CFrame.RightVector end
+		if UIS:IsKeyDown(Enum.KeyCode.D) then moveDir += cam.CFrame.RightVector end
+		if UIS:IsKeyDown(Enum.KeyCode.Space) then moveDir += cam.CFrame.UpVector end
+		if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir -= cam.CFrame.UpVector end
+
+		flyVelocity.Velocity = moveDir.Unit * flySpeed
+	end)
+end
+
+-- Dừng bay
+local function stopFly()
+	RS:UnbindFromRenderStep("FlyUpdate")
+	if flyVelocity then flyVelocity:Destroy() end
+end
+
+-- Toggle Fly
+PlayerTab:CreateToggle({
+	Name = "Fly",
+	CurrentValue = false,
+	Callback = function(state)
+		flying = state
+		if flying then
+			startFly()
+		else
+			stopFly()
+		end
+	end
+})
+
+-- Fly Speed Slider
+PlayerTab:CreateSlider({
+	Name = "Tốc Độ Bay",
+	Range = {10, 300},
+	Increment = 10,
+	CurrentValue = 80,
+	Callback = function(value)
+		flySpeed = value
+	end
+})
+
 -- ESPTab
 -- Chức năng 1
 local homeESPPart
