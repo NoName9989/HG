@@ -200,26 +200,25 @@ FarmTab:CreateSlider({
         -- update follow loop to use behindDistance instead of fixed 25
     end,
 })
--- Tab 2 Auto Skill
-local Tab2 = Rayfield:CreateTab("Autoskill")
-FarmTab:CreateSection("Shinigami Farm")
+local AutoSkillTab = Window:CreateTab("Auto Skill")
+AutoSkillTab:CreateSection("Auto Skill Settings")
 
 local selectedKeys = {} -- phím được chọn
 local keyDelays = {}    -- delay từng phím
 local autoEnabled = false
 
--- Dropdown chọn phím (chọn nhiều)
-local dropdown = Tab2:CreateDropdown({
-    Name = "Chọn Phím",
+-- Dropdown chọn phím (multi-select)
+local keyDropdown = AutoSkillTab:CreateDropdown({
+    Name = "Select Keys",
     Options = {"z", "x", "c", "v", "f"},
-    Multiple = true,
     CurrentOption = {},
-    Flag = "KeyDropdown",
-    Callback = function(selected)
-        selectedKeys = selected
-        for _, key in pairs(selected) do
+    MultiSelect = true,
+    Flag = "SelectKeys",
+    Callback = function(options)
+        selectedKeys = options or {}
+        for _, key in pairs(selectedKeys) do
             if not keyDelays[key] then
-                keyDelays[key] = 0.5
+                keyDelays[key] = 0.5 -- default delay
             end
         end
     end
@@ -227,10 +226,10 @@ local dropdown = Tab2:CreateDropdown({
 
 -- InputBox cho delay từng phím
 for _, key in pairs({"z","x","c","v","f"}) do
-    keyDelays[key] = 0.5 -- default 0.5s
-    Tab2:CreateInput({
+    keyDelays[key] = 0.5
+    AutoSkillTab:CreateInput({
         Name = "Delay "..key.." (s)",
-        PlaceholderText = "Nhập delay "..key,
+        PlaceholderText = "Enter delay for "..key,
         RemoveTextAfterFocusLost = false,
         Callback = function(text)
             local val = tonumber(text)
@@ -244,12 +243,13 @@ for _, key in pairs({"z","x","c","v","f"}) do
 end
 
 -- Toggle auto skill
-Tab2:CreateToggle({
-    Name = "Bật/Tắt Auto Skill",
+AutoSkillTab:CreateToggle({
+    Name = "Enable Auto Skill",
+    CurrentValue = false,
     Flag = "AutoSkillToggle",
-    Callback = function(state)
-        autoEnabled = state
-        if state then
+    Callback = function(val)
+        autoEnabled = val
+        if val then
             spawn(function()
                 while autoEnabled do
                     for _, key in pairs(selectedKeys) do
@@ -265,5 +265,3 @@ Tab2:CreateToggle({
         end
     end
 })
-
-
