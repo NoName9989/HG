@@ -201,15 +201,14 @@ FarmTab:CreateSlider({
     end,
 })
 
--- Tab 2
+-- Tab 2 Auto Skill
 local Tab2 = Rayfield:CreateTab({
     Name = "Auto Skill",
     Icon = "rbxassetid://3926305904",
     PremiumOnly = false
 })
 
--- Bảng lưu trạng thái
-local selectedKeys = {} -- phím được chọn trong dropdown
+local selectedKeys = {} -- phím được chọn
 local keyDelays = {}    -- delay từng phím
 local autoEnabled = false
 
@@ -222,7 +221,6 @@ local dropdown = Tab2:CreateDropdown({
     Flag = "KeyDropdown",
     Callback = function(selected)
         selectedKeys = selected
-        -- Khởi tạo delay mặc định nếu chưa có
         for _, key in pairs(selected) do
             if not keyDelays[key] then
                 keyDelays[key] = 0.5
