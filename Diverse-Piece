@@ -132,101 +132,60 @@ local Window = Rayfield:CreateWindow({
     Author = "HG"
 })
 
-local FarmTab = Window:CreateTab("Farm")
-FarmTab:CreateSection("Shinigami Farm")
-
--- Farm toggle (master)
-FarmTab:CreateToggle({
-    Name = "Farm Shinigami Boss (Follow & AutoQuest)",
-    CurrentValue = false,
-    Flag = "FarmShini",
-    Callback = function(val)
-        FarmEnabled = val
-    end,
-})
-
--- Dropdown: get tool list function
-local function GetToolNames()
-    local list = {}
-    local bp = player:FindFirstChild("Backpack")
-    if bp then
-        for _, item in ipairs(bp:GetChildren()) do
-            if item:IsA("Tool") then
-                table.insert(list, item.Name)
-            end
-        end
-    end
-    return list
-end
-
--- Weapon dropdown (multi-select)
-local weaponDropdown = FarmTab:CreateDropdown({
-    Name = "Select weapons to keep",
-    Options = GetToolNames(),
-    CurrentOption = {},
-    MultiSelect = true,
-    Flag = "KeepWeapons",
-    Callback = function(options)
-        SelectedWeapons = options or {}
-    end,
-})
-
-FarmTab:CreateButton({
-    Name = "Refresh Weapon List",
-    Callback = function()
-        weaponDropdown:Set(GetToolNames())
-    end,
-})
-
--- Toggle: Auto Keep Selected Weapons
-FarmTab:CreateToggle({
-    Name = "Auto Keep Selected Weapons",
-    CurrentValue = false,
-    Callback = function(val)
-        AutoKeepWeapon = val
-    end,
-})
-
--- Optional: Slider to tweak behind distance (exposed)
-local behindDistance = 25
-FarmTab:CreateSlider({
-    Name = "Behind Distance (studs)",
-    Range = {5, 60},
-    Increment = 1,
-    CurrentValue = behindDistance,
-    Suffix = "studs",
-    Callback = function(v)
-        behindDistance = v
-        -- update follow loop to use behindDistance instead of fixed 25
-    end,
-})
 local AutoSkillTab = Window:CreateTab("Auto Skill")
 AutoSkillTab:CreateSection("Auto Skill Settings")
 
-local selectedKeys = {} -- phím được chọn
-local keyDelays = {}    -- delay từng phím
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local InputRemote = ReplicatedStorage.Remotes.Events.Input
+
+local selectedKeys = {}
+local keyDelays = {}
 local autoEnabled = false
 
--- Dropdown chọn phím (multi-select)
-local keyDropdown = AutoSkillTab:CreateDropdown({
-    Name = "Select Keys",
-    Options = {"z", "x", "c", "v", "f"},
-    CurrentOption = {},
-    MultiSelect = true,
-    Flag = "SelectKeys",
-    Callback = function(options)
-        selectedKeys = options or {}
-        for _, key in pairs(selectedKeys) do
-            if not keyDelays[key] then
-                keyDelays[key] = 0.5 -- default delay
-            end
+-- Hàm lấy tool đang equip
+local function GetEquippedTool()
+    local character = LocalPlayer.Character
+    if not character then return nil end
+    for _, child in ipairs(character:GetChildren()) do
+        if child:IsA("Tool") then
+            return child
         end
     end
-})
+    return nil
+end
 
--- InputBox cho delay từng phím
-for _, key in pairs({"z","x","c","v","f"}) do
-    keyDelays[key] = 0.5
+-- Toggle cho từng phím
+local keys = {"Z","X","C","V","F"}
+for _, key in pairs(keys) do
+    keyDelays[key] = 0.5 -- default delay
+
+    -- Toggle bật/tắt auto skill cho phím
+    AutoSkillTab:CreateToggle({
+        Name = "Auto "..key,
+        CurrentValue = false,
+        Flag = "Auto"..key,
+        Callback = function(state)
+            if state then
+                spawn(function()
+                    while state do
+                        if not autoEnabled then break end
+                        local tool = GetEquippedTool()
+                        if tool then
+                            -- Ví dụ vị trí target bạn có thể thay đổi
+                            local targetPos = Vector3.new(1254,16,-1091)
+                            InputRemote:FireServer("Tool", tool, key, targetPos)
+                        end
+                        task.wait(keyDelays[key])
+                    end
+                end)
+            end
+        end
+    })
+
+    -- InputBox delay cho phím
     AutoSkillTab:CreateInput({
         Name = "Delay "..key.." (s)",
         PlaceholderText = "Enter delay for "..key,
@@ -242,26 +201,12 @@ for _, key in pairs({"z","x","c","v","f"}) do
     })
 end
 
--- Toggle auto skill
+-- Master toggle cho Tab 2
 AutoSkillTab:CreateToggle({
-    Name = "Enable Auto Skill",
+    Name = "Enable Auto Skill Tab",
     CurrentValue = false,
-    Flag = "AutoSkillToggle",
+    Flag = "AutoSkillMaster",
     Callback = function(val)
         autoEnabled = val
-        if val then
-            spawn(function()
-                while autoEnabled do
-                    for _, key in pairs(selectedKeys) do
-                        -- Ấn phím theo Delta X
-                        game:GetService("VirtualUser"):SendKeyEvent(true, key, false, game)
-                        task.wait(0.05)
-                        game:GetService("VirtualUser"):SendKeyEvent(false, key, false, game)
-                        task.wait(keyDelays[key])
-                    end
-                    task.wait(0.1)
-                end
-            end)
-        end
     end
 })
