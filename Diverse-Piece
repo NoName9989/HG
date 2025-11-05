@@ -200,13 +200,9 @@ FarmTab:CreateSlider({
         -- update follow loop to use behindDistance instead of fixed 25
     end,
 })
-
 -- Tab 2 Auto Skill
-local Tab2 = Rayfield:CreateTab({
-    Name = "Auto Skill",
-    Icon = "rbxassetid://3926305904",
-    PremiumOnly = false
-})
+local Tab2 = Rayfield:CreateTab("Autoskill")
+FarmTab:CreateSection("Shinigami Farm")
 
 local selectedKeys = {} -- phím được chọn
 local keyDelays = {}    -- delay từng phím
@@ -269,3 +265,5 @@ Tab2:CreateToggle({
         end
     end
 })
+
+
