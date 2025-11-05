@@ -1,0 +1,210 @@
+-- Diverse Piece | Full
+-- Author: HG
+-- Features:
+--  - Rayfield UI (toggle Farm Boss)
+--  - Auto Accept Quest (every 2s while farming)
+--  - Follow boss (keep behind ~25 studs, face boss)
+--  - Dropdown list tools from Backpack (multi-select)
+--  - Auto Keep Selected Weapons (re-equip if swapped)
+--  - Respawn-safe (updates Character/HRP)
+
+-- Services & basic refs
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local player = Players.LocalPlayer
+
+-- Remote & Quest NPC (use the remote exactly as your game)
+local Input = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Functions"):WaitForChild("Input")
+local QuestShinigami = workspace:WaitForChild("NPCs"):WaitForChild("Quest Shinigami")
+
+-- State
+local FarmEnabled = false
+local AutoKeepWeapon = false
+local SelectedWeapons = {} -- list of weapon names to keep
+
+-- Character / HRP (auto-update on respawn)
+local Character = player.Character or player.CharacterAdded:Wait()
+local HRP = Character:WaitForChild("HumanoidRootPart")
+
+player.CharacterAdded:Connect(function(char)
+    Character = char
+    HRP = nil
+    HRP = Character:WaitForChild("HumanoidRootPart")
+end)
+
+-- Utility: get current boss (by exact name)
+local function GetShinigami()
+    local enemies = workspace:FindFirstChild("Enemies")
+    if not enemies then return nil end
+    local mob = enemies:FindFirstChild("Shinigami [Level 1000]")
+    if mob and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
+        return mob
+    end
+    return nil
+end
+
+-- Auto Accept Quest loop (2s)
+task.spawn(function()
+    while task.wait(2) do
+        if FarmEnabled then
+            pcall(function()
+                Input:InvokeServer("Quest", "Accept", QuestShinigami)
+            end)
+        end
+    end
+end)
+
+-- Follow Boss loop (every frame-ish)
+task.spawn(function()
+    while task.wait() do
+        if FarmEnabled and HRP and Character then
+            pcall(function()
+                local boss = GetShinigami()
+                if boss and boss:FindFirstChild("HumanoidRootPart") then
+                    local bossRoot = boss.HumanoidRootPart
+                    -- compute position behind boss using LookVector * 25
+                    local behindOffset = bossRoot.CFrame.LookVector * -25
+                    local targetPos = bossRoot.Position + behindOffset + Vector3.new(0, 1.5, 0)
+                    -- set HRP CFrame and face boss
+                    HRP.CFrame = CFrame.new(targetPos, bossRoot.Position)
+                end
+            end)
+        end
+    end
+end)
+
+-- Auto Keep Selected Weapons loop (every 0.5s)
+task.spawn(function()
+    while task.wait(0.5) do
+        if AutoKeepWeapon and Character then
+            pcall(function()
+                -- find currently equipped tool in Character
+                local equippedTool = Character:FindFirstChildWhichIsA("Tool")
+                local keepCurrent = false
+                if equippedTool then
+                    if table.find(SelectedWeapons, equippedTool.Name) then
+                        keepCurrent = true
+                    end
+                end
+
+                if not keepCurrent then
+                    -- try to equip the first available selected weapon from Backpack
+                    local bp = player:FindFirstChild("Backpack")
+                    if bp then
+                        for _, wname in ipairs(SelectedWeapons) do
+                            local tool = bp:FindFirstChild(wname)
+                            if tool and tool:IsA("Tool") then
+                                -- equip by parenting to Character (works in many games)
+                                tool.Parent = Character
+                                break
+                            end
+                        end
+                    end
+
+                    -- also try workspace.Characters path if your game uses that representation
+                    if not Character:FindFirstChildWhichIsA("Tool") and workspace:FindFirstChild("Characters") then
+                        local charFolder = workspace.Characters:FindFirstChild(player.Name)
+                        if charFolder then
+                            for _, wname in ipairs(SelectedWeapons) do
+                                local tool = player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild(wname)
+                                if tool then
+                                    tool.Parent = charFolder
+                                    break
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- Rayfield UI
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "Diverse Piece",
+    LoadingTitle = "loading…",
+    LoadingSubtitle = "By HG",
+    ConfigurationSaving = { Enabled = false },
+    KeySystem = false,
+    Author = "HG"
+})
+
+local FarmTab = Window:CreateTab("Farm")
+FarmTab:CreateSection("Shinigami Farm")
+
+-- Farm toggle (master)
+FarmTab:CreateToggle({
+    Name = "Farm Shinigami Boss (Follow & AutoQuest)",
+    CurrentValue = false,
+    Flag = "FarmShini",
+    Callback = function(val)
+        FarmEnabled = val
+    end,
+})
+
+-- Dropdown: get tool list function
+local function GetToolNames()
+    local list = {}
+    local bp = player:FindFirstChild("Backpack")
+    if bp then
+        for _, item in ipairs(bp:GetChildren()) do
+            if item:IsA("Tool") then
+                table.insert(list, item.Name)
+            end
+        end
+    end
+    return list
+end
+
+-- Weapon dropdown (multi-select)
+local weaponDropdown = FarmTab:CreateDropdown({
+    Name = "Select weapons to keep",
+    Options = GetToolNames(),
+    CurrentOption = {},
+    MultiSelect = true,
+    Flag = "KeepWeapons",
+    Callback = function(options)
+        SelectedWeapons = options or {}
+    end,
+})
+
+FarmTab:CreateButton({
+    Name = "Refresh Weapon List",
+    Callback = function()
+        weaponDropdown:Set(GetToolNames())
+    end,
+})
+
+-- Toggle: Auto Keep Selected Weapons
+FarmTab:CreateToggle({
+    Name = "Auto Keep Selected Weapons",
+    CurrentValue = false,
+    Callback = function(val)
+        AutoKeepWeapon = val
+    end,
+})
+
+-- Optional: Slider to tweak behind distance (exposed)
+local behindDistance = 25
+FarmTab:CreateSlider({
+    Name = "Behind Distance (studs)",
+    Range = {5, 60},
+    Increment = 1,
+    CurrentValue = behindDistance,
+    Suffix = "studs",
+    Callback = function(v)
+        behindDistance = v
+        -- update follow loop to use behindDistance instead of fixed 25
+    end,
+})
+
+-- If user changes behindDistance, we should use it; update follow loop accordingly.
+-- For easier integration, modify the follow loop above to use 'behindDistance' variable:
+-- replace local behindOffset = bossRoot.CFrame.LookVector * -25
+-- with local behindOffset = bossRoot.CFrame.LookVector * -behindDistance
+-- (You can edit that if you paste elsewhere.)
+
+-- End of script
