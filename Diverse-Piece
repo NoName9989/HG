@@ -201,10 +201,73 @@ FarmTab:CreateSlider({
     end,
 })
 
--- If user changes behindDistance, we should use it; update follow loop accordingly.
--- For easier integration, modify the follow loop above to use 'behindDistance' variable:
--- replace local behindOffset = bossRoot.CFrame.LookVector * -25
--- with local behindOffset = bossRoot.CFrame.LookVector * -behindDistance
--- (You can edit that if you paste elsewhere.)
+-- Tab 2
+local Tab2 = Rayfield:CreateTab({
+    Name = "Auto Skill",
+    Icon = "rbxassetid://3926305904",
+    PremiumOnly = false
+})
 
--- End of script
+-- Bảng lưu trạng thái
+local selectedKeys = {} -- phím được chọn trong dropdown
+local keyDelays = {}    -- delay từng phím
+local autoEnabled = false
+
+-- Dropdown chọn phím (chọn nhiều)
+local dropdown = Tab2:CreateDropdown({
+    Name = "Chọn Phím",
+    Options = {"z", "x", "c", "v", "f"},
+    Multiple = true,
+    CurrentOption = {},
+    Flag = "KeyDropdown",
+    Callback = function(selected)
+        selectedKeys = selected
+        -- Khởi tạo delay mặc định nếu chưa có
+        for _, key in pairs(selected) do
+            if not keyDelays[key] then
+                keyDelays[key] = 0.5
+            end
+        end
+    end
+})
+
+-- InputBox cho delay từng phím
+for _, key in pairs({"z","x","c","v","f"}) do
+    keyDelays[key] = 0.5 -- default 0.5s
+    Tab2:CreateInput({
+        Name = "Delay "..key.." (s)",
+        PlaceholderText = "Nhập delay "..key,
+        RemoveTextAfterFocusLost = false,
+        Callback = function(text)
+            local val = tonumber(text)
+            if val and val > 0 then
+                keyDelays[key] = val
+            else
+                print("Delay không hợp lệ cho phím "..key)
+            end
+        end
+    })
+end
+
+-- Toggle auto skill
+Tab2:CreateToggle({
+    Name = "Bật/Tắt Auto Skill",
+    Flag = "AutoSkillToggle",
+    Callback = function(state)
+        autoEnabled = state
+        if state then
+            spawn(function()
+                while autoEnabled do
+                    for _, key in pairs(selectedKeys) do
+                        -- Ấn phím theo Delta X
+                        game:GetService("VirtualUser"):SendKeyEvent(true, key, false, game)
+                        task.wait(0.05)
+                        game:GetService("VirtualUser"):SendKeyEvent(false, key, false, game)
+                        task.wait(keyDelays[key])
+                    end
+                    task.wait(0.1)
+                end
+            end)
+        end
+    end
+})
