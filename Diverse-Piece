@@ -261,9 +261,11 @@ Tab2:CreateToggle({
     Name = "Black Screen",
     CurrentValue = false,
     Callback = function(v) BlackScreen = v end
-})
---// TAB 3: TELEPORT
+})--// TAB 3: TELEPORT
 local Tab3 = Window:CreateTab("Teleport")
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
 
 local TeleportLocations = {
     ["Wani Kuni"] = CFrame.new(23.85, 156.91, -34.05),
@@ -296,12 +298,6 @@ Tab3:CreateButton({
             local char = player.Character or player.CharacterAdded:Wait()
             local hrp = char:WaitForChild("HumanoidRootPart")
             hrp.CFrame = SelectedTP + Vector3.new(0,3,0)
-        else
-            Rayfield:Notify({
-                Title = "Chưa chọn map",
-                Content = "Nhớ chọn map trước nha!",
-                Duration = 3
-            })
         end
     end
 })
@@ -310,7 +306,9 @@ Tab3:CreateButton({
 -- TELEPORT NPC SECTION
 ----------------------------
 local NPCList = {}
-for _, npc in ipairs(workspace.NPCs:GetChildren()) do
+local npcFolder = workspace:FindFirstChild("NPCs") or workspace
+
+for _, npc in ipairs(npcFolder:GetChildren()) do
     if npc:IsA("Model") or npc:IsA("Folder") then
         table.insert(NPCList, npc.Name)
     end
@@ -330,20 +328,12 @@ Tab3:CreateButton({
     Name = "Teleport NPC",
     Callback = function()
         if SelectedNPC then
-            local npc = workspace.NPCs:FindFirstChild(SelectedNPC)
+            local npc = npcFolder:FindFirstChild(SelectedNPC)
             if npc then
                 local char = player.Character or player.CharacterAdded:Wait()
                 local hrp = char:WaitForChild("HumanoidRootPart")
-
-                -- Ưu tiên tìm HumanoidRootPart/CFrame
                 local root = npc:FindFirstChild("HumanoidRootPart") or npc:FindFirstChild("Head") or npc
                 hrp.CFrame = root.CFrame + Vector3.new(0,3,0)
-            else
-                Rayfield:Notify({
-                    Title = "NPC không tồn tại",
-                    Content = "NPC đã biến mất hoặc thay đổi!",
-                    Duration = 3
-                })
             end
         end
     end
