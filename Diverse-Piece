@@ -1,212 +1,350 @@
--- Diverse Piece | Full
--- Author: HG
--- Features:
---  - Rayfield UI (toggle Farm Boss)
---  - Auto Accept Quest (every 2s while farming)
---  - Follow boss (keep behind ~25 studs, face boss)
---  - Dropdown list tools from Backpack (multi-select)
---  - Auto Keep Selected Weapons (re-equip if swapped)
---  - Respawn-safe (updates Character/HRP)
-
--- Services & basic refs
+--// Services
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Lighting = game:GetService("Lighting")
 local player = Players.LocalPlayer
-
--- Remote & Quest NPC (use the remote exactly as your game)
-local Input = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Functions"):WaitForChild("Input")
-local QuestShinigami = workspace:WaitForChild("NPCs"):WaitForChild("Quest Shinigami")
-
--- State
-local FarmEnabled = false
-local AutoKeepWeapon = false
-local SelectedWeapons = {} -- list of weapon names to keep
-
--- Character / HRP (auto-update on respawn)
 local Character = player.Character or player.CharacterAdded:Wait()
 local HRP = Character:WaitForChild("HumanoidRootPart")
 
+--// Remotes
+local InputFunc = ReplicatedStorage.Remotes.Functions.Input
+local InputEvent = ReplicatedStorage.Remotes.Events.Input
+
+--// NPC & Boss
+local QuestNPC = workspace.NPCs["Quest Shinigami"]
+local Enemies = workspace.Enemies
+local BossName = "Shinigami [Level 1000]"
+
+--// State
+local Farm = false
+local AutoM1 = false
+local AutoHaki = false
+local SelectedWeapons = {}
+local backpackItems = {}
+local ReduceLag = false
+local BlackScreen = false
+
+-- Store default lighting to restore later
+local DefaultLighting = {
+    Ambient = Lighting.Ambient,
+    OutdoorAmbient = Lighting.OutdoorAmbient,
+    GlobalShadows = Lighting.GlobalShadows
+}
+
+-- Update Character/HRP on respawn
 player.CharacterAdded:Connect(function(char)
     Character = char
-    HRP = nil
-    HRP = Character:WaitForChild("HumanoidRootPart")
+    HRP = char:WaitForChild("HumanoidRootPart")
 end)
 
--- Utility: get current boss (by exact name)
-local function GetShinigami()
-    local enemies = workspace:FindFirstChild("Enemies")
-    if not enemies then return nil end
-    local mob = enemies:FindFirstChild("Shinigami [Level 1000]")
-    if mob and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
-        return mob
+--// Follow boss function (-15 studs)
+local function FollowBoss()
+    local boss = Enemies:FindFirstChild(BossName)
+    if boss and boss:FindFirstChild("HumanoidRootPart") then
+        local br = boss.HumanoidRootPart
+        local pos = br.Position + (br.CFrame.LookVector * -15) + Vector3.new(0,2,0)
+        HRP.CFrame = CFrame.new(pos, br.Position)
     end
-    return nil
 end
 
--- Auto Accept Quest loop (2s)
-task.spawn(function()
-    while task.wait(2) do
-        if FarmEnabled then
-            pcall(function()
-                Input:InvokeServer("Quest", "Accept", QuestShinigami)
-            end)
+--// Equip selected weapon
+local function EquipWeapon()
+    for _, w in ipairs(SelectedWeapons) do
+        local tool = player.Backpack:FindFirstChild(w)
+        if tool then
+            tool.Parent = workspace.Characters:FindFirstChild(player.Name)
+            break
         end
     end
-end)
+end
 
--- Follow Boss loop (every frame-ish)
+--// Refresh backpack items (manual)
+local function RefreshBackpack()
+    backpackItems = {}
+    for _, item in ipairs(player.Backpack:GetChildren()) do
+        if item:IsA("Tool") then
+            table.insert(backpackItems, item.Name)
+        end
+    end
+end
+
+RefreshBackpack()
+
+--// Check & Equip Haki nếu chưa bật
+function CheckAndEquipHaki()
+    local charFolder = workspace.Characters:FindFirstChild(player.Name)
+    if charFolder and not charFolder:FindFirstChild("Armament Haki") then
+        InputEvent:FireServer("Armament Haki")
+    end
+end
+
+--// Main farm loop
 task.spawn(function()
     while task.wait() do
-        if FarmEnabled and HRP and Character then
+        if Farm then
             pcall(function()
-                local boss = GetShinigami()
-                if boss and boss:FindFirstChild("HumanoidRootPart") then
-                    local bossRoot = boss.HumanoidRootPart
-                    -- compute position behind boss using LookVector * 25
-                    local behindOffset = bossRoot.CFrame.LookVector * -25
-                    local targetPos = bossRoot.Position + behindOffset + Vector3.new(0, 1.5, 0)
-                    -- set HRP CFrame and face boss
-                    HRP.CFrame = CFrame.new(targetPos, bossRoot.Position)
+                local quests = player:WaitForChild("Data"):WaitForChild("Quests"):WaitForChild("Main")
+                local questShinigami = quests:FindFirstChild("Quest Shinigami")
+
+                if questShinigami then
+                    local boss = Enemies:FindFirstChild(BossName)
+                    if boss and boss:FindFirstChild("HumanoidRootPart") then
+                        FollowBoss()
+                        EquipWeapon()
+                        if AutoHaki then CheckAndEquipHaki() end
+                        local tool = Character:FindFirstChildWhichIsA("Tool")
+                        if AutoM1 and tool then
+                            InputEvent:FireServer("Tool", tool, "M1")
+                        end
+                    end
+                else
+                    HRP.CFrame = QuestNPC.HumanoidRootPart.CFrame * CFrame.new(0,2,0)
+                    InputFunc:InvokeServer("Quest", "Accept", QuestNPC)
+                    task.wait(0.2)
                 end
             end)
         end
     end
 end)
 
--- Auto Keep Selected Weapons loop (every 0.5s)
+--// Auto Check & Equip Haki mỗi 3 giây
+task.spawn(function()
+    while task.wait(3) do
+        if AutoHaki and Character then
+            CheckAndEquipHaki()
+        end
+    end
+end)
+
+--// Lag reducer loop
+local function RemoveEffects(model)
+    for _, obj in ipairs(model:GetDescendants()) do
+        if obj:IsA("ParticleEmitter") 
+        or obj:IsA("Trail") 
+        or obj:IsA("Beam") 
+        or obj:IsA("Fire") 
+        or obj:IsA("Smoke") then
+            obj.Enabled = false
+        end
+    end
+end
+
+task.spawn(function()
+    while task.wait(1) do
+        if ReduceLag then
+            if Character and Character:FindFirstChild("Humanoid") then
+                local hum = Character.Humanoid
+                for _, track in ipairs(hum:GetPlayingAnimationTracks()) do track:Stop() end
+                if hum:FindFirstChild("Animator") then hum.Animator:Destroy() end
+            end
+            if Character then RemoveEffects(Character) end
+
+            local boss = Enemies:FindFirstChild(BossName)
+            if boss then
+                if boss:FindFirstChild("Humanoid") then
+                    for _, track in ipairs(boss.Humanoid:GetPlayingAnimationTracks()) do track:Stop() end
+                end
+                RemoveEffects(boss)
+            end
+
+            for _, obj in ipairs(workspace:GetDescendants()) do
+                if obj:IsA("BillboardGui") or obj:IsA("SurfaceGui") then obj.Enabled = false
+                elseif obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then obj.Enabled = false end
+            end
+        end
+    end
+end)
+
+--// Black Screen Function (tăng size phủ toàn màn hình)
+local function CreateBlackScreen()
+    local playerGui = player:WaitForChild("PlayerGui")
+    local gui = playerGui:FindFirstChild("BlackScreenGui")
+    if gui then gui:Destroy() end
+
+    gui = Instance.new("ScreenGui")
+    gui.Name = "BlackScreenGui"
+    gui.ResetOnSpawn = false
+    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    gui.Parent = playerGui
+
+    local frame = Instance.new("Frame")
+    frame.AnchorPoint = Vector2.new(0.5,0.5)
+    frame.Position = UDim2.new(0.5, 0, 0.5, 0)
+    frame.Size = UDim2.new(2, 0, 2, 0) -- phủ kín tuyệt đối
+    frame.BackgroundColor3 = Color3.new(0,0,0)
+    frame.BorderSizePixel = 0
+    frame.ZIndex = 9999
+    frame.Parent = gui
+
+    return gui
+end
+
+-- Auto maintain BlackScreen
 task.spawn(function()
     while task.wait(0.5) do
-        if AutoKeepWeapon and Character then
-            pcall(function()
-                -- find currently equipped tool in Character
-                local equippedTool = Character:FindFirstChildWhichIsA("Tool")
-                local keepCurrent = false
-                if equippedTool then
-                    if table.find(SelectedWeapons, equippedTool.Name) then
-                        keepCurrent = true
-                    end
-                end
-
-                if not keepCurrent then
-                    -- try to equip the first available selected weapon from Backpack
-                    local bp = player:FindFirstChild("Backpack")
-                    if bp then
-                        for _, wname in ipairs(SelectedWeapons) do
-                            local tool = bp:FindFirstChild(wname)
-                            if tool and tool:IsA("Tool") then
-                                -- equip by parenting to Character (works in many games)
-                                tool.Parent = Character
-                                break
-                            end
-                        end
-                    end
-
-                    -- also try workspace.Characters path if your game uses that representation
-                    if not Character:FindFirstChildWhichIsA("Tool") and workspace:FindFirstChild("Characters") then
-                        local charFolder = workspace.Characters:FindFirstChild(player.Name)
-                        if charFolder then
-                            for _, wname in ipairs(SelectedWeapons) do
-                                local tool = player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild(wname)
-                                if tool then
-                                    tool.Parent = charFolder
-                                    break
-                                end
-                            end
-                        end
-                    end
-                end
-            end)
+        if BlackScreen then
+            if not player.PlayerGui:FindFirstChild("BlackScreenGui") then
+                CreateBlackScreen()
+            end
+            Lighting.Ambient = Color3.new(0,0,0)
+            Lighting.OutdoorAmbient = Color3.new(0,0,0)
+            Lighting.GlobalShadows = false
+        else
+            local gui = player.PlayerGui:FindFirstChild("BlackScreenGui")
+            if gui then gui:Destroy() end
+            -- Restore default lighting
+            Lighting.Ambient = DefaultLighting.Ambient
+            Lighting.OutdoorAmbient = DefaultLighting.OutdoorAmbient
+            Lighting.GlobalShadows = DefaultLighting.GlobalShadows
         end
     end
 end)
 
--- Rayfield UI
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+--// Rayfield UI
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
 local Window = Rayfield:CreateWindow({
     Name = "Diverse Piece",
-    LoadingTitle = "loading…",
-    LoadingSubtitle = "By HG",
+    LoadingTitle = "Loading...",
+    LoadingSubtitle = "by HG",
     ConfigurationSaving = { Enabled = false },
-    KeySystem = false,
-    Author = "HG"
+    KeySystem = false
 })
 
-local AutoSkillTab = Window:CreateTab("Auto Skill")
-AutoSkillTab:CreateSection("Auto Skill Settings")
+-- Tab 1: Shinigami Farm
+local Tab1 = Window:CreateTab("Shinigami Farm")
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+Tab1:CreateToggle({
+    Name = "Auto Farm Shinigami",
+    CurrentValue = false,
+    Callback = function(v) Farm = v end
+})
 
-local InputRemote = ReplicatedStorage.Remotes.Events.Input
+Tab1:CreateToggle({
+    Name = "Auto M1",
+    CurrentValue = false,
+    Callback = function(v) AutoM1 = v end
+})
 
-local selectedKeys = {}
-local keyDelays = {}
-local autoEnabled = false
+Tab1:CreateToggle({
+    Name = "Auto Bật Haki",
+    CurrentValue = false,
+    Callback = function(v) AutoHaki = v end
+})
 
--- Hàm lấy tool đang equip
-local function GetEquippedTool()
-    local character = LocalPlayer.Character
-    if not character then return nil end
-    for _, child in ipairs(character:GetChildren()) do
-        if child:IsA("Tool") then
-            return child
+local WeaponDrop = Tab1:CreateDropdown({
+    Name = "Choose Weapons",
+    Options = backpackItems,
+    MultiSelect = true,
+    Callback = function(opts) SelectedWeapons = opts end
+})
+
+Tab1:CreateButton({
+    Name = "Refresh Weapons",
+    Callback = function()
+        RefreshBackpack()
+        WeaponDrop:Refresh(backpackItems)
+        SelectedWeapons = {}
+    end
+})
+
+-- Tab 2: Performance / Lag Reducer + Black Screen
+local Tab2 = Window:CreateTab("Performance / Lag Reducer")
+
+Tab2:CreateToggle({
+    Name = "Reduce Lag",
+    CurrentValue = false,
+    Callback = function(v) ReduceLag = v end
+})
+
+Tab2:CreateToggle({
+    Name = "Black Screen",
+    CurrentValue = false,
+    Callback = function(v) BlackScreen = v end
+})
+--// TAB 3: TELEPORT
+local Tab3 = Window:CreateTab("Teleport")
+
+local TeleportLocations = {
+    ["Wani Kuni"] = CFrame.new(23.85, 156.91, -34.05),
+    ["Starter"] = CFrame.new(-1330.14, 12.77, 1064.71),
+    ["Namek"] = CFrame.new(-42.19, 11.34, 1366.13),
+    ["Dadadan"] = CFrame.new(-1369.99, 11.94, 169.85),
+    ["Scrapyard"] = CFrame.new(1474.92, 58.90, 943.75),
+    ["Jujutsu"] = CFrame.new(-777.00, 13.94, -1225.88),
+    ["Karakura"] = CFrame.new(1075.40, 19.25, -1156.35)
+}
+
+local SelectedTP = nil
+
+Tab3:CreateDropdown({
+    Name = "Chọn Map để Teleport",
+    Options = (function()
+        local list = {}
+        for name,_ in pairs(TeleportLocations) do table.insert(list, name) end
+        return list
+    end)(),
+    Callback = function(value)
+        SelectedTP = TeleportLocations[value]
+    end
+})
+
+Tab3:CreateButton({
+    Name = "Teleport Map",
+    Callback = function()
+        if SelectedTP then
+            local char = player.Character or player.CharacterAdded:Wait()
+            local hrp = char:WaitForChild("HumanoidRootPart")
+            hrp.CFrame = SelectedTP + Vector3.new(0,3,0)
+        else
+            Rayfield:Notify({
+                Title = "Chưa chọn map",
+                Content = "Nhớ chọn map trước nha!",
+                Duration = 3
+            })
         end
     end
-    return nil
+})
+
+----------------------------
+-- TELEPORT NPC SECTION
+----------------------------
+local NPCList = {}
+for _, npc in ipairs(workspace.NPCs:GetChildren()) do
+    if npc:IsA("Model") or npc:IsA("Folder") then
+        table.insert(NPCList, npc.Name)
+    end
 end
 
--- Toggle cho từng phím
-local keys = {"Z","X","C","V","F"}
-for _, key in pairs(keys) do
-    keyDelays[key] = 0.5 -- default delay
+local SelectedNPC = nil
 
-    -- Toggle bật/tắt auto skill cho phím
-    AutoSkillTab:CreateToggle({
-        Name = "Auto "..key,
-        CurrentValue = false,
-        Flag = "Auto"..key,
-        Callback = function(state)
-            if state then
-                spawn(function()
-                    while state do
-                        if not autoEnabled then break end
-                        local tool = GetEquippedTool()
-                        if tool then
-                            -- Ví dụ vị trí target bạn có thể thay đổi
-                            local targetPos = Vector3.new(1254,16,-1091)
-                            InputRemote:FireServer("Tool", tool, key, targetPos)
-                        end
-                        task.wait(keyDelays[key])
-                    end
-                end)
-            end
-        end
-    })
+Tab3:CreateDropdown({
+    Name = "Chọn NPC",
+    Options = NPCList,
+    Callback = function(v)
+        SelectedNPC = v
+    end
+})
 
-    -- InputBox delay cho phím
-    AutoSkillTab:CreateInput({
-        Name = "Delay "..key.." (s)",
-        PlaceholderText = "Enter delay for "..key,
-        RemoveTextAfterFocusLost = false,
-        Callback = function(text)
-            local val = tonumber(text)
-            if val and val > 0 then
-                keyDelays[key] = val
+Tab3:CreateButton({
+    Name = "Teleport NPC",
+    Callback = function()
+        if SelectedNPC then
+            local npc = workspace.NPCs:FindFirstChild(SelectedNPC)
+            if npc then
+                local char = player.Character or player.CharacterAdded:Wait()
+                local hrp = char:WaitForChild("HumanoidRootPart")
+
+                -- Ưu tiên tìm HumanoidRootPart/CFrame
+                local root = npc:FindFirstChild("HumanoidRootPart") or npc:FindFirstChild("Head") or npc
+                hrp.CFrame = root.CFrame + Vector3.new(0,3,0)
             else
-                print("Delay không hợp lệ cho phím "..key)
+                Rayfield:Notify({
+                    Title = "NPC không tồn tại",
+                    Content = "NPC đã biến mất hoặc thay đổi!",
+                    Duration = 3
+                })
             end
         end
-    })
-end
-
--- Master toggle cho Tab 2
-AutoSkillTab:CreateToggle({
-    Name = "Enable Auto Skill Tab",
-    CurrentValue = false,
-    Flag = "AutoSkillMaster",
-    Callback = function(val)
-        autoEnabled = val
     end
 })
