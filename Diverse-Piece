@@ -261,11 +261,20 @@ Tab2:CreateToggle({
     Name = "Black Screen",
     CurrentValue = false,
     Callback = function(v) BlackScreen = v end
-})--// TAB 3: TELEPORT
+})
+
+--// TAB 3: TELEPORT
 local Tab3 = Window:CreateTab("Teleport")
 
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
+local MapNames = {
+    "Wani Kuni",
+    "Starter",
+    "Namek",
+    "Dadadan",
+    "Scrapyard",
+    "Jujutsu",
+    "Karakura"
+}
 
 local TeleportLocations = {
     ["Wani Kuni"] = CFrame.new(23.85, 156.91, -34.05),
@@ -277,50 +286,41 @@ local TeleportLocations = {
     ["Karakura"] = CFrame.new(1075.40, 19.25, -1156.35)
 }
 
-local SelectedTP = nil
+local SelectedMap = nil
 
 Tab3:CreateDropdown({
     Name = "Chọn Map để Teleport",
-    Options = (function()
-        local list = {}
-        for name,_ in pairs(TeleportLocations) do table.insert(list, name) end
-        return list
-    end)(),
-    Callback = function(value)
-        SelectedTP = TeleportLocations[value]
+    Options = MapNames,
+    Callback = function(map)
+        SelectedMap = TeleportLocations[map]
     end
 })
 
 Tab3:CreateButton({
     Name = "Teleport Map",
     Callback = function()
-        if SelectedTP then
-            local char = player.Character or player.CharacterAdded:Wait()
-            local hrp = char:WaitForChild("HumanoidRootPart")
-            hrp.CFrame = SelectedTP + Vector3.new(0,3,0)
+        if SelectedMap then
+            local hrp = player.Character:WaitForChild("HumanoidRootPart")
+            hrp.CFrame = SelectedMap + Vector3.new(0,3,0)
         end
     end
 })
 
-----------------------------
--- TELEPORT NPC SECTION
-----------------------------
-local NPCList = {}
-local npcFolder = workspace:FindFirstChild("NPCs") or workspace
+-- TELEPORT NPC
+local npcFolder = workspace:WaitForChild("NPCs")
+local NPC_List = {}
 
-for _, npc in ipairs(npcFolder:GetChildren()) do
-    if npc:IsA("Model") or npc:IsA("Folder") then
-        table.insert(NPCList, npc.Name)
-    end
+for _,v in ipairs(npcFolder:GetChildren()) do
+    table.insert(NPC_List, v.Name)
 end
 
 local SelectedNPC = nil
 
 Tab3:CreateDropdown({
     Name = "Chọn NPC",
-    Options = NPCList,
-    Callback = function(v)
-        SelectedNPC = v
+    Options = NPC_List,
+    Callback = function(npc)
+        SelectedNPC = npc
     end
 })
 
@@ -330,10 +330,8 @@ Tab3:CreateButton({
         if SelectedNPC then
             local npc = npcFolder:FindFirstChild(SelectedNPC)
             if npc then
-                local char = player.Character or player.CharacterAdded:Wait()
-                local hrp = char:WaitForChild("HumanoidRootPart")
                 local root = npc:FindFirstChild("HumanoidRootPart") or npc:FindFirstChild("Head") or npc
-                hrp.CFrame = root.CFrame + Vector3.new(0,3,0)
+                player.Character.HumanoidRootPart.CFrame = root.CFrame + Vector3.new(0,3,0)
             end
         end
     end
