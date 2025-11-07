@@ -266,7 +266,6 @@ Tab2:CreateToggle({
 --// TAB 3: TELEPORT
 local Tab3 = Window:CreateTab("Teleport")
 
--- MAP LIST
 local TeleportLocations = {
     ["Wani Kuni"] = CFrame.new(23.85, 156.91, -34.05),
     ["Starter"] = CFrame.new(-1330.14, 12.77, 1064.71),
@@ -277,9 +276,10 @@ local TeleportLocations = {
     ["Karakura"] = CFrame.new(1075.40, 19.25, -1156.35)
 }
 
+-- Convert key table to list for dropdown
 local MapList = {}
-for name,_ in pairs(TeleportLocations) do
-    table.insert(MapList, name)
+for map,_ in pairs(TeleportLocations) do
+    table.insert(MapList, map)
 end
 
 local SelectedTP = nil
@@ -296,20 +296,19 @@ Tab3:CreateButton({
     Name = "Teleport Map",
     Callback = function()
         if SelectedTP then
-            local char = player.Character or player.CharacterAdded:Wait()
-            local hrp = char:WaitForChild("HumanoidRootPart")
-            hrp.CFrame = SelectedTP + Vector3.new(0,3,0)
+            local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                hrp.CFrame = SelectedTP + Vector3.new(0,3,0)
+            end
         end
     end
 })
 
--- NPC TELEPORT
-local npcFolder = workspace:WaitForChild("NPCs")
-local NPC_List = {}
-
-for _,npc in ipairs(npcFolder:GetChildren()) do
+-- NPC Teleport
+local NPCList = {}
+for _, npc in ipairs(workspace.NPCs:GetChildren()) do
     if npc:IsA("Model") or npc:IsA("Folder") then
-        table.insert(NPC_List, npc.Name)
+        table.insert(NPCList, npc.Name)
     end
 end
 
@@ -317,7 +316,7 @@ local SelectedNPC = nil
 
 Tab3:CreateDropdown({
     Name = "Chọn NPC",
-    Options = NPC_List,
+    Options = NPCList,
     Callback = function(npc)
         SelectedNPC = npc
     end
@@ -327,12 +326,13 @@ Tab3:CreateButton({
     Name = "Teleport NPC",
     Callback = function()
         if SelectedNPC then
-            local npc = npcFolder:FindFirstChild(SelectedNPC)
+            local npc = workspace.NPCs:FindFirstChild(SelectedNPC)
             if npc then
-                local char = player.Character or player.CharacterAdded:Wait()
-                local hrp = char:WaitForChild("HumanoidRootPart")
+                local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
                 local root = npc:FindFirstChild("HumanoidRootPart") or npc:FindFirstChild("Head") or npc
-                hrp.CFrame = root.CFrame + Vector3.new(0,3,0)
+                if hrp and root then
+                    hrp.CFrame = root.CFrame + Vector3.new(0,3,0)
+                end
             end
         end
     end
