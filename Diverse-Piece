@@ -266,9 +266,10 @@ Tab2:CreateToggle({
 --// TAB 3: TELEPORT
 local Tab3 = Window:CreateTab("Teleport")
 
+-- Map positions
 local TeleportLocations = {
     ["Wani Kuni"] = CFrame.new(23.85, 156.91, -34.05),
-    ["Starter"] = CFrame.new(-1330.14, 12.77, 1064.71),
+    ["Starter Island"] = CFrame.new(-1330.14, 12.77, 1064.71),
     ["Namek"] = CFrame.new(-42.19, 11.34, 1366.13),
     ["Dadadan"] = CFrame.new(-1369.99, 11.94, 169.85),
     ["Scrapyard"] = CFrame.new(1474.92, 58.90, 943.75),
@@ -276,64 +277,17 @@ local TeleportLocations = {
     ["Karakura"] = CFrame.new(1075.40, 19.25, -1156.35)
 }
 
--- Convert key table to list for dropdown
-local MapList = {}
-for map,_ in pairs(TeleportLocations) do
-    table.insert(MapList, map)
+local function TeleportTo(cf)
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    hrp.CFrame = cf + Vector3.new(0, 3, 0)
 end
 
-local SelectedTP = nil
-
-Tab3:CreateDropdown({
-    Name = "Chọn Map để Teleport",
-    Options = MapList,
-    Callback = function(map)
-        SelectedTP = TeleportLocations[map]
-    end
-})
-
-Tab3:CreateButton({
-    Name = "Teleport Map",
-    Callback = function()
-        if SelectedTP then
-            local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                hrp.CFrame = SelectedTP + Vector3.new(0,3,0)
-            end
+for name,cf in pairs(TeleportLocations) do
+    Tab3:CreateButton({
+        Name = "Teleport to " .. name,
+        Callback = function()
+            TeleportTo(cf)
         end
-    end
-})
-
--- NPC Teleport
-local NPCList = {}
-for _, npc in ipairs(workspace.NPCs:GetChildren()) do
-    if npc:IsA("Model") or npc:IsA("Folder") then
-        table.insert(NPCList, npc.Name)
-    end
+    })
 end
-
-local SelectedNPC = nil
-
-Tab3:CreateDropdown({
-    Name = "Chọn NPC",
-    Options = NPCList,
-    Callback = function(npc)
-        SelectedNPC = npc
-    end
-})
-
-Tab3:CreateButton({
-    Name = "Teleport NPC",
-    Callback = function()
-        if SelectedNPC then
-            local npc = workspace.NPCs:FindFirstChild(SelectedNPC)
-            if npc then
-                local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-                local root = npc:FindFirstChild("HumanoidRootPart") or npc:FindFirstChild("Head") or npc
-                if hrp and root then
-                    hrp.CFrame = root.CFrame + Vector3.new(0,3,0)
-                end
-            end
-        end
-    end
-})
