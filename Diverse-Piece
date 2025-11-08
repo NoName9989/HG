@@ -263,6 +263,40 @@ Tab2:CreateToggle({
     Callback = function(v) BlackScreen = v end
 })
 
+-- // Toggle Remove / Restore Effects
+local EffectsBackup = nil
+local EffectsToggle = false
+
+Tab2:CreateToggle({
+	Name = "Toggle Remove Effects",
+	CurrentValue = false,
+	Callback = function(state)
+		EffectsToggle = state
+		local Extra = workspace:FindFirstChild("Extra")
+		if not Extra then return end
+
+		if EffectsToggle then
+			-- ✅ BẬT: Xoá Effects
+			if Extra:FindFirstChild("Effects") then
+				EffectsBackup = Extra.Effects:Clone()
+				Extra.Effects:Destroy()
+			end
+		else
+			-- ❌ TẮT: Restore Effects
+			if not Extra:FindFirstChild("Effects") then
+				if EffectsBackup then
+					EffectsBackup.Parent = Extra
+					EffectsBackup = nil
+				else
+					local newFolder = Instance.new("Folder")
+					newFolder.Name = "Effects"
+					newFolder.Parent = Extra
+				end
+			end
+		end
+	end
+})
+
 --// TAB 3: TELEPORT
 local Tab3 = Window:CreateTab("Teleport")
 
