@@ -11,9 +11,9 @@ local InputFunc = ReplicatedStorage.Remotes.Functions.Input
 local InputEvent = ReplicatedStorage.Remotes.Events.Input
 
 --// NPC & Boss
-local QuestNPC = workspace.NPCs["Quest Shinigami"]
+local QuestNPC = workspace.NPCs["Quest Pillar"]
 local Enemies = workspace.Enemies
-local BossName = "Shinigami [Level 1000]"
+local BossName = "Nameless Pillar [Level 1250]"
 
 --// State
 local Farm = false
@@ -84,9 +84,9 @@ task.spawn(function()
         if Farm then
             pcall(function()
                 local quests = player:WaitForChild("Data"):WaitForChild("Quests"):WaitForChild("Main")
-                local questShinigami = quests:FindFirstChild("Quest Shinigami")
+                local QuestNamelessPillar = quests:FindFirstChild("Quest Nameless Pillar")
 
-                if questShinigami then
+                if QuestNamelessPillar then
                     local boss = Enemies:FindFirstChild(BossName)
                     if boss and boss:FindFirstChild("HumanoidRootPart") then
                         FollowBoss()
