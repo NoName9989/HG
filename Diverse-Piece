@@ -11,7 +11,7 @@ local InputFunc = ReplicatedStorage.Remotes.Functions.Input
 local InputEvent = ReplicatedStorage.Remotes.Events.Input
 
 --// NPC & Boss
-local QuestNPC = workspace.NPCs["Quest Pillar"]
+local QuestNPC = workspace.NPCs["Quest Nameless Pillar"]
 local Enemies = workspace.Enemies
 local BossName = "Nameless Pillar [Level 1250]"
 
@@ -215,7 +215,7 @@ local Window = Rayfield:CreateWindow({
 local Tab1 = Window:CreateTab("Shinigami Farm")
 
 Tab1:CreateToggle({
-    Name = "Auto Farm Shinigami",
+    Name = "Auto Farm",
     CurrentValue = false,
     Callback = function(v) Farm = v end
 })
