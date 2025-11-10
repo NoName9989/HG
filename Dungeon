@@ -1,0 +1,216 @@
+-- Dungeon Farm GUI (Rayfield) - LocalScript (No Lag Reducer)
+
+if not game:IsLoaded() then
+    repeat task.wait() until game:IsLoaded()
+end
+
+-- Services
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Lighting = game:GetService("Lighting")
+
+local player = Players.LocalPlayer
+local Character = player.Character or player.CharacterAdded:Wait()
+local HRP = Character:WaitForChild("HumanoidRootPart")
+
+-- Remotes
+local InputFunc = ReplicatedStorage.Remotes.Functions.Input
+local InputEvent = ReplicatedStorage.Remotes.Events.Input
+
+-- Dungeon Variables
+local DungeonPlaceId = 111446341662453
+local DungeonFarm = false
+local AutoM1 = false
+local AutoHaki = false
+local SelectedWeapons = {}
+local backpackItems = {}
+
+local Enemies = workspace:WaitForChild("Enemies")
+
+-- Update Character/HRP on respawn
+player.CharacterAdded:Connect(function(char)
+    Character = char
+    HRP = char:WaitForChild("HumanoidRootPart")
+end)
+
+-- Store default lighting to restore later
+local DefaultLighting = {
+    Ambient = Lighting.Ambient,
+    OutdoorAmbient = Lighting.OutdoorAmbient,
+    GlobalShadows = Lighting.GlobalShadows
+}
+
+-- Black Screen Function
+local BlackScreen = false
+local function CreateBlackScreen()
+    local playerGui = player:WaitForChild("PlayerGui")
+    local gui = playerGui:FindFirstChild("BlackScreenGui")
+    if gui then gui:Destroy() end
+
+    gui = Instance.new("ScreenGui")
+    gui.Name = "BlackScreenGui"
+    gui.ResetOnSpawn = false
+    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    gui.Parent = playerGui
+
+    local frame = Instance.new("Frame")
+    frame.AnchorPoint = Vector2.new(0.5,0.5)
+    frame.Position = UDim2.new(0.5,0,0.5,0)
+    frame.Size = UDim2.new(2,0,2,0)
+    frame.BackgroundColor3 = Color3.new(0,0,0)
+    frame.BorderSizePixel = 0
+    frame.ZIndex = 9999
+    frame.Parent = gui
+
+    return gui
+end
+
+-- Auto maintain BlackScreen
+task.spawn(function()
+    while task.wait(0.5) do
+        if BlackScreen then
+            if not player.PlayerGui:FindFirstChild("BlackScreenGui") then
+                CreateBlackScreen()
+            end
+            Lighting.Ambient = Color3.new(0,0,0)
+            Lighting.OutdoorAmbient = Color3.new(0,0,0)
+            Lighting.GlobalShadows = false
+        else
+            local gui = player.PlayerGui:FindFirstChild("BlackScreenGui")
+            if gui then gui:Destroy() end
+            -- Restore default lighting
+            Lighting.Ambient = DefaultLighting.Ambient
+            Lighting.OutdoorAmbient = DefaultLighting.OutdoorAmbient
+            Lighting.GlobalShadows = DefaultLighting.GlobalShadows
+        end
+    end
+end)
+
+-- Equip Weapon
+local function EquipWeapon()
+    for _, w in ipairs(SelectedWeapons) do
+        local tool = player.Backpack:FindFirstChild(w)
+        if tool then
+            tool.Parent = Character
+            break
+        end
+    end
+end
+
+-- Refresh backpack items
+local function RefreshBackpack()
+    backpackItems = {}
+    for _, item in ipairs(player.Backpack:GetChildren()) do
+        if item:IsA("Tool") then
+            table.insert(backpackItems, item.Name)
+        end
+    end
+end
+
+RefreshBackpack()
+
+-- Check & Equip Haki
+local function CheckAndEquipHaki()
+    local charFolder = workspace.Characters:FindFirstChild(player.Name)
+    if charFolder and not charFolder:FindFirstChild("Armament Haki") then
+        InputEvent:FireServer("Armament Haki")
+    end
+end
+
+-- Follow any enemy in dungeon
+local function FollowAnyEnemy()
+    for _, mob in ipairs(Enemies:GetChildren()) do
+        if mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 and mob:FindFirstChild("HumanoidRootPart") then
+            local br = mob.HumanoidRootPart
+            local pos = br.Position + (br.CFrame.LookVector * -15) + Vector3.new(0,2,0)
+            HRP.CFrame = CFrame.new(pos, br.Position)
+            return mob
+        end
+    end
+    return nil
+end
+
+-- Auto Dungeon Loop
+task.spawn(function()
+    while task.wait() do
+        if DungeonFarm and game.PlaceId == DungeonPlaceId then
+            pcall(function()
+                local mob = FollowAnyEnemy()
+                if mob then
+                    EquipWeapon()
+                    if AutoHaki then CheckAndEquipHaki() end
+                    local tool = Character:FindFirstChildWhichIsA("Tool")
+                    if AutoM1 and tool then
+                        InputEvent:FireServer("Tool", tool, "M1")
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- Auto Haki every 3 seconds
+task.spawn(function()
+    while task.wait(3) do
+        if AutoHaki and Character then
+            CheckAndEquipHaki()
+        end
+    end
+end)
+
+-- Rayfield GUI
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "Dungeon Farm GUI",
+    LoadingTitle = "Dungeon Farm GUI",
+    LoadingSubtitle = "by HG",
+    ConfigurationSaving = {Enabled=false},
+    KeySystem=false
+})
+
+-- Tab 1: Dungeon
+local Tab1 = Window:CreateTab("Dungeon Farm")
+
+Tab1:CreateToggle({
+    Name="Auto Dungeon",
+    CurrentValue=false,
+    Callback=function(v) DungeonFarm = v end
+})
+
+Tab1:CreateToggle({
+    Name="Auto M1",
+    CurrentValue=false,
+    Callback=function(v) AutoM1 = v end
+})
+
+Tab1:CreateToggle({
+    Name="Auto Haki",
+    CurrentValue=false,
+    Callback=function(v) AutoHaki = v end
+})
+
+local WeaponDrop = Tab1:CreateDropdown({
+    Name="Choose Weapons",
+    Options=backpackItems,
+    MultiSelect=true,
+    Callback=function(opts) SelectedWeapons = opts end
+})
+
+Tab1:CreateButton({
+    Name="Refresh Weapons",
+    Callback=function()
+        RefreshBackpack()
+        WeaponDrop:Refresh(backpackItems)
+        SelectedWeapons = {}
+    end
+})
+
+Tab1:CreateButton({
+    Name="Teleport Khu An Toàn",
+    Callback=function()
+        local char = player.Character or player.CharacterAdded:Wait()
+        local hrp = char:WaitForChild("HumanoidRootPart")
+        hrp.CFrame = CFrame.new(78.63,-16.02,-102.42)
+    end
+})
