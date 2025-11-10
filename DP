@@ -1,0 +1,24 @@
+-- Map-based script loader
+
+local DungeonPlaceId = 111446341662453
+
+-- URLs
+local DungeonURL = "https://raw.githubusercontent.com/NoName9989/HG/refs/heads/main/Dungeon"
+local DiverseURL = "https://raw.githubusercontent.com/NoName9989/HG/refs/heads/main/Diverse-Piece"
+
+-- Function to safely load a remote script
+local function safeLoad(url)
+    local ok, result = pcall(function()
+        return loadstring(game:HttpGet(url))()
+    end)
+    if not ok then
+        warn("Failed to load script from:", url, result)
+    end
+end
+
+-- Decide which script to load based on PlaceId
+if game.PlaceId == DungeonPlaceId then
+    safeLoad(DungeonURL)
+else
+    safeLoad(DiverseURL)
+end
