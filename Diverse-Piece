@@ -308,7 +308,8 @@ local TeleportLocations = {
     ["Dadadan"] = CFrame.new(-1369.99, 11.94, 169.85),
     ["Scrapyard"] = CFrame.new(1474.92, 58.90, 943.75),
     ["Jujutsu"] = CFrame.new(-777.00, 13.94, -1225.88),
-    ["Karakura"] = CFrame.new(1075.40, 19.25, -1156.35)
+    ["Karakura"] = CFrame.new(1075.40, 19.25, -1156.35),
+    ["Ubuyashiki"] = CFrame.new(266.32, 10.16, -2382.47)
 }
 
 local function TeleportTo(cf)
