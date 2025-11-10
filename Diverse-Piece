@@ -375,10 +375,13 @@ task.spawn(function()
     end
 end)
 
--- Safe Zone Button
 Tab4:CreateButton({
     Name = "Teleport Khu An Toàn",
     Callback = function()
+        if game.PlaceId ~= DungeonPlaceId then
+            return -- chặn dịch chuyển sai map
+        end
+
         local char = player.Character or player.CharacterAdded:Wait()
         local hrp = char:WaitForChild("HumanoidRootPart")
         hrp.CFrame = CFrame.new(78.63, -16.02, -102.42)
