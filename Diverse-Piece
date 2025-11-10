@@ -329,9 +329,9 @@ end
 --// TAB 4: DUNGEON FARM
 local Tab4 = Window:CreateTab("Dungeon Farm")
 
+local DungeonPlaceId = 111446341662453
 local DungeonFarm = false
 
--- Follow ANY enemy
 local function FollowAnyEnemy()
     for _, mob in ipairs(workspace.Enemies:GetChildren()) do
         if mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 and mob:FindFirstChild("HumanoidRootPart") then
@@ -348,18 +348,23 @@ Tab4:CreateToggle({
     Name = "Auto Dungeon",
     CurrentValue = false,
     Callback = function(v)
+        if game.PlaceId ~= DungeonPlaceId then
+            DungeonFarm = false
+            return
+        end
         DungeonFarm = v
     end
 })
 
 task.spawn(function()
     while task.wait() do
-        if DungeonFarm then
+        if DungeonFarm and game.PlaceId == DungeonPlaceId then
             pcall(function()
                 local mob = FollowAnyEnemy()
                 if mob then
                     EquipWeapon()
                     if AutoHaki then CheckAndEquipHaki() end
+
                     local tool = Character:FindFirstChildWhichIsA("Tool")
                     if tool then
                         InputEvent:FireServer("Tool", tool, "M1")
@@ -370,7 +375,7 @@ task.spawn(function()
     end
 end)
 
--- Safe Zone Teleport
+-- Safe Zone Button
 Tab4:CreateButton({
     Name = "Teleport Khu An Toàn",
     Callback = function()
