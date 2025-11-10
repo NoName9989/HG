@@ -325,3 +325,57 @@ for name,cf in pairs(TeleportLocations) do
         end
     })
 end
+
+--// TAB 4: DUNGEON FARM
+local Tab4 = Window:CreateTab("Dungeon Farm")
+
+local DungeonFarm = false
+
+-- Follow ANY enemy
+local function FollowAnyEnemy()
+    for _, mob in ipairs(workspace.Enemies:GetChildren()) do
+        if mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 and mob:FindFirstChild("HumanoidRootPart") then
+            local br = mob.HumanoidRootPart
+            local pos = br.Position + (br.CFrame.LookVector * -15) + Vector3.new(0,2,0)
+            HRP.CFrame = CFrame.new(pos, br.Position)
+            return mob
+        end
+    end
+    return nil
+end
+
+Tab4:CreateToggle({
+    Name = "Auto Dungeon",
+    CurrentValue = false,
+    Callback = function(v)
+        DungeonFarm = v
+    end
+})
+
+task.spawn(function()
+    while task.wait() do
+        if DungeonFarm then
+            pcall(function()
+                local mob = FollowAnyEnemy()
+                if mob then
+                    EquipWeapon()
+                    if AutoHaki then CheckAndEquipHaki() end
+                    local tool = Character:FindFirstChildWhichIsA("Tool")
+                    if tool then
+                        InputEvent:FireServer("Tool", tool, "M1")
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- Safe Zone Teleport
+Tab4:CreateButton({
+    Name = "Teleport Khu An Toàn",
+    Callback = function()
+        local char = player.Character or player.CharacterAdded:Wait()
+        local hrp = char:WaitForChild("HumanoidRootPart")
+        hrp.CFrame = CFrame.new(78.63, -16.02, -102.42)
+    end
+})
